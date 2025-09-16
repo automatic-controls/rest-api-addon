@@ -13,6 +13,13 @@ The REST API Add-On provides secure access to WebCTRL server data and functional
 > :book: **Full interactive documentation** is available from the add-on's main page once installed on your WebCTRL server. This README is meant only to give a brief overview of the capabilities.
 ---
 
+## :rocket: Installation
+
+1. If signed add-ons are required, copy the authenticating certificate [*ACES.cer*](https://github.com/automatic-controls/addon-dev-script/blob/main/ACES.cer?raw=true) to the `./programdata/addons` directory of your *WebCTRL* installation folder.
+2. Install [*RestAPI.addon*](https://github.com/automatic-controls/rest-api-addon/releases/latest/download/RestAPI.addon) using the *WebCTRL* interface.
+
+---
+
 ## :satellite: Endpoints
 
 The add-on exposes the following endpoints:
