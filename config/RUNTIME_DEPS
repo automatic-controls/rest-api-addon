@@ -1,0 +1,12 @@
+file:webserver-api:modules\webserver
+file:core:modules\core
+file:core-api:modules\core
+file:common:modules\common
+file:commonexceptions:modules\commonexceptions
+file:commonbaseutils:bin\lib
+file:webui:webroot\WEB-INF\lib
+file:webaccess-api:modules\webaccess
+file:directaccess-api:modules\directaccess
+file:directaccess:modules\directaccess
+file:manualcommands:modules\manualcommands
+file:datatable:modules\datatable

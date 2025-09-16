@@ -1,0 +1,14 @@
+.vscode
+Utility.bat
+classes
+root/LICENSE
+root/webapp/docs/lib
+root/webapp/docs/webfonts
+root/webapp/WEB-INF/classes
+root/webapp/WEB-INF/lib
+lib
+**/*.jar
+**/*.addon
+**/*.zip
+openapi
+README.html

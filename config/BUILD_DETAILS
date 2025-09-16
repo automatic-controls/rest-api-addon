@@ -1,0 +1,35 @@
+JDK Version:
+openjdk 24.0.1 2025-04-15
+OpenJDK Runtime Environment (build 24.0.1+9-30)
+OpenJDK 64-Bit Server VM (build 24.0.1+9-30, mixed mode, sharing)
+
+Compilation Flags:
+--release 11
+
+Runtime Dependencies:
+addonsupport-api-addon-1.10.0
+alarmmanager-api-addon-1.10.0
+bacnet-api-core-1.11.004-20250407.1435r
+datatable-api-addon-1.10.0
+directaccess-api-addon-1.10.0
+logicbuilder-api-addon-1.10.0
+semantics-api-addon-1.10.0
+tomcat-embed-core-9.0.104
+webaccess-api-addon-1.10.0
+xdatabase-api-addon-1.10.0
+common-9.0.002
+commonbaseutils-2.0.5
+commonexceptions-9.0.002
+core-9.0.002
+core-api-9.0.002
+datatable-9.0.002
+directaccess-9.0.002
+directaccess-api-9.0.002
+manualcommands-9.0.002
+webaccess-api-9.0.002
+webserver-api-9.0.002
+webui-9.0.002
+
+Packaged Dependencies:
+fastjson2-2.0.58-sources
+fastjson2-2.0.58

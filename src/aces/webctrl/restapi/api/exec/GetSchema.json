@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetSchema",
+  "description": "Retrieve the JSON schema used to validate input for an API endpoint.",
+  "type": "object",
+  "properties": {
+    "endpoint": {
+      "type": "string",
+      "description": "The API endpoint to retrieve the schema for (case-insensitive).",
+      "minLength": 1
+    },
+    "verbose": {
+      "type": "boolean",
+      "description": "If true, the returned schema will include additional description fields.",
+      "default": false
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "This parameter is ignored."
+    }
+  },
+  "required": [
+    "endpoint"
+  ],
+  "additionalProperties": false
+}

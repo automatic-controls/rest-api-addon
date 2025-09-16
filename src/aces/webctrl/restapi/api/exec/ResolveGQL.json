@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ResolveGQL",
+  "description": "Resolve a GQL path or DBID to one or more nodes, optionally evaluating an expression and/or including immediate children.",
+  "type": "object",
+  "properties": {
+    "path": {
+      "anyOf": [
+        {
+          "type": "string",
+          "description": "The GQL path to resolve. An empty-path will resolve to the location specified by the session's current context, or the root of the geo tree if no context is available."
+        },
+        {
+          "type": "integer",
+          "description": "The DBID of the node to resolve."
+        }
+      ]
+    },
+    "expression": {
+      "anyOf": [
+        {
+          "type": "string",
+          "description": "If provided, the response will include the results of evaluating this expression against the resolved node(s).",
+          "default": null
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "If provided, the response will include the results of evaluating these expressions against the resolved node(s).",
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      ]
+    },
+    "listAttributes": {
+      "type": "boolean",
+      "description": "If true, the response will include a list of attributes for the resolved node.",
+      "default": false
+    },
+    "fieldAccess":{
+      "type": "boolean",
+      "description": "If true, information may be retrieved from devices in the field. It is suggested to leave this false unless you need it.",
+      "default": false
+    },
+    "includeChildren": {
+      "type": "boolean",
+      "description": "If true, the response will include the immediate children of the resolved node.",
+      "default": false
+    },
+    "childFilter": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "A list of node types to include when returning children. If omitted, all child node types are included. This parameter is ignored if includeChildren is false.",
+      "minItems": 1,
+      "uniqueItems": true,
+      "default": [
+        "AREA",
+        "BEQU"
+      ]
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "If provided, this DBID will be used as the session's context for resolving relative paths."
+    },
+    "relative": {
+      "type": "boolean",
+      "description": "If this is true, then the path is resolved relative to the session's current context. If the session has no context, or if this is false, then the path is resolved from the root of the geo tree.",
+      "default": true
+    }
+  },
+  "additionalProperties": false
+}

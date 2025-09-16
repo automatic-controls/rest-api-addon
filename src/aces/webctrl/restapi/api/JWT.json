@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "JWT",
+  "type": "object",
+  "properties": {
+    "iss": {
+      "type": "string",
+      "description": "Public API key.",
+      "minLength": 1
+    },
+    "aud": {
+      "type": "string",
+      "description": "Target API endpoint.",
+      "minLength": 1
+    },
+    "jti": {
+      "type": "string",
+      "description": "Randomly generated UUID.",
+      "minLength": 1
+    },
+    "iat": {
+      "type": "number",
+      "description": "Time of JWT creation (number of seconds since the epoch)",
+      "minimum": 0
+    },
+    "data": {
+      "type": "object",
+      "description": "Data to be passed to the API endpoint."
+    }
+  },
+  "required": [
+    "iss",
+    "aud",
+    "jti",
+    "iat"
+  ],
+  "additionalProperties": false
+}

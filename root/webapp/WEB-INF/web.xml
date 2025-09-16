@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app>
+
+  <listener>
+    <listener-class>aces.webctrl.restapi.core.Initializer</listener-class>
+  </listener>
+
+  <welcome-file-list>
+    <welcome-file>index</welcome-file>
+  </welcome-file-list>
+
+  <servlet>
+    <servlet-name>MainPage</servlet-name>
+    <servlet-class>aces.webctrl.restapi.web.MainPage</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MainPage</servlet-name>
+    <url-pattern>/index</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>API</servlet-name>
+    <servlet-class>aces.webctrl.restapi.api.ApiHandler</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>API</servlet-name>
+    <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>WEB</web-resource-name>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+  </security-constraint>
+
+  <filter>
+    <filter-name>RoleFilterAJAX</filter-name>
+    <filter-class>com.controlj.green.addonsupport.web.RoleFilter</filter-class>
+    <init-param>
+      <param-name>roles</param-name>
+      <param-value>login</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>RoleFilterAJAX</filter-name>
+    <url-pattern>/docs/*</url-pattern>
+  </filter-mapping>
+
+  <filter>
+    <filter-name>CacheFilter</filter-name>
+    <filter-class>aces.webctrl.restapi.web.CacheFilter</filter-class>
+  </filter>
+  <filter-mapping>
+    <filter-name>CacheFilter</filter-name>
+    <url-pattern>/docs/*</url-pattern>
+  </filter-mapping>
+
+</web-app>

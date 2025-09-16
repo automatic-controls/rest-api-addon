@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation</title>
+  <link rel="stylesheet" href="./docs.css">
+  <script src="./api.js"></script>
+  <link rel="stylesheet" href="./lib/all.min.css">
+  <link rel="stylesheet" href="./lib/atom-one-dark.min.css">
+  <script src="./lib/highlight.min.js"></script>
+  <script src="./lib/http.min.js"></script>
+  <script src="./lib/powershell.min.js"></script>
+  <script>
+    var devmode = false;
+    function toggleDevMode(){
+      devmode = !devmode;
+      return devmode;
+    }
+    function stripNonDigits(input) {
+      if (input) {
+        input.value = input.value.replace(/\D+/g, '');
+      }
+    }
+    function stringifyWithBigInts(o) {
+      let hasBigInts = false;
+      let ret = JSON.stringify(o, (_k, v) => {
+        if (typeof v === 'bigint') {
+          hasBigInts = true;
+          return 'BIGINT:' + String(v);
+        } else {
+          return v;
+        }
+      }, 4);
+      if (hasBigInts) {
+        ret = ret.replaceAll(/"BIGINT:(-?\d+)"/g, '$1');
+      }
+      return ret;
+    }
+    function registerEndpointDemo(endpoint, getData) {
+      const apiForm = document.getElementById(endpoint + '-demo-form');
+      const apiResult = document.getElementById(endpoint + '-demo-result');
+      const apiResultCode = document.getElementById(endpoint + '-demo-result-code');
+      const loadingSpinner = document.getElementById(endpoint + '-loading');
+      apiForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        apiResult.style.display = 'none';
+        apiResultCode.innerHTML = '';
+        loadingSpinner.style.display = 'inline-block';
+        try {
+          const client = new WebCTRLAPIClient(null,null,null,false);
+          const result = await client.sendRequest(endpoint, getData());
+          apiResultCode.innerHTML = typeof result === 'object' ? stringifyWithBigInts(result) : String(result);
+          apiResult.style.display = 'block';
+          if (window.hljs) {
+            if (apiResultCode.dataset.highlighted) {
+              delete apiResultCode.dataset.highlighted;
+            }
+            window.hljs.highlightElement(apiResultCode);
+          }
+          loadingSpinner.style.display = 'none';
+        } catch (err) {
+          apiResultCode.innerHTML = 'Error: ' + (err && err.message ? err.message : err);
+          apiResult.style.display = 'block';
+          loadingSpinner.style.display = 'none';
+        }
+      });
+    }
+  </script>
+</head>
+
+<body>
+  <!-- Sidebar Navigation -->
+  <div class="sidebar" id="sidebar">
+    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse/Expand Sidebar">
+      <i class="fas fa-angle-left" id="sidebarToggleIcon"></i>
+    </button>
+    <div class="logo">
+      <h1><i class="fas fa-code"></i> WebCTRL&nbsp;API Documentation</h1>
+    </div>
+    <div class="nav-section">
+      <h3><i class="fas fa-info-circle"></i> <span class="nav-label">Information</span></h3>
+      <ul>
+        <li class="nav-item" data-target="summary">
+          <i class="fas fa-list-alt"></i> <span class="nav-label">Summary</span>
+        </li>
+        <li class="nav-item" data-target="authentication">
+          <i class="fas fa-key"></i> <span class="nav-label">Authentication</span>
+        </li>
+      </ul>
+      <li class="nav-item" data-target="js-sdk">
+        <i class="fab fa-js-square"></i> <span class="nav-label">JavaScript&nbsp;SDK</span>
+      </li>
+      <li class="nav-item" data-target="ps-sdk">
+        <i class="fa-solid fa-terminal"></i> <span class="nav-label">PowerShell&nbsp;SDK</span>
+      </li>
+    </div>
+    <div class="nav-section">
+      <h3><i class="fas fa-book"></i> <span class="nav-label">Endpoints</span></h3>
+      <ul>
+        <li class="nav-item" data-target="get-schema">
+          <i class="fas fa-file-alt"></i> <span class="nav-label">GetSchema</span>
+        </li>
+        <li class="nav-item" data-target="resolve-gql">
+          <i class="fas fa-search"></i> <span class="nav-label">ResolveGQL</span>
+        </li>
+        <li class="nav-item" data-target="exec-command">
+          <i class="fas fa-terminal"></i> <span class="nav-label">ExecCommand</span>
+        </li>
+      </ul>
+      <li class="nav-item" data-target="get-schema">
+      </li>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Summary Section -->
+    <div id="summary" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-list-alt"></i> Summary</h2>
+      </div>
+      <div class="api-info-card api-info-primary">
+        <div class="api-info-header">
+          <i class="fas fa-info-circle" style="color:var(--primary);"></i>
+          <span style="font-size:17px;font-weight:600;">Overview</span>
+        </div>
+        <div style="color:var(--text-secondary);margin-bottom:8px;">
+          This documentation provides an overview of the WebCTRL REST API, including authentication, available
+          endpoints, and SDKs for JavaScript and PowerShell. Use the navigation pane to explore details about
+          authentication, SDK usage, and each API endpoint.
+        </div>
+        <div class="api-info-card api-info-success" style="margin-top:18px;">
+          <div class="api-info-header">
+            <i class="fas fa-book" style="color:var(--success);"></i>
+            <span style="font-size:16px;font-weight:600;">Available Endpoints</span>
+          </div>
+          <ul style="margin-left:10px;margin-bottom:0px;">
+            <li style="margin-bottom:10px;">
+              <b><a href="#get-schema" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-file-alt" style="margin-right:6px;"></i>GetSchema</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Retrieves the JSON schema used to validate input for an API endpoint.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#resolve-gql" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-search" style="margin-right:6px;"></i>ResolveGQL</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Resolves a GQL path or DBID to retrieve details about the resolved node, including children and evaluated expressions.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#exec-command" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-terminal" style="margin-right:6px;"></i>ExecCommand</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Executes manual commands on the server. Refer to WebCTRL's documentation for specific commands.</span>
+            </li>
+            <!-- Add future endpoints here -->
+          </ul>
+        </div>
+      </div>
+      <div class="api-info-card api-info-info">
+        <div class="api-info-header">
+          <i class="fas fa-lightbulb" style="color:var(--info);"></i>
+          <span style="font-size:17px;font-weight:600;">Getting Started</span>
+        </div>
+        <div style="color:var(--text-secondary);margin-bottom:8px;">
+          To begin using the API, review the authentication requirements, then explore the available endpoints. SDKs are
+          provided for rapid integration, or you can use your own HTTP client.
+        </div>
+      </div>
+    </div>
+
+    <!-- Authentication Section -->
+    <div id="authentication" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-key"></i> Authentication</h2>
+      </div>
+
+      <div class="api-info-card api-info-primary">
+        <div class="api-info-header" style="gap:14px;">
+          <i class="fas fa-user-shield" style="font-size:28px;color:var(--primary);"></i>
+          <span style="font-size:20px;font-weight:600;">API Key Pair</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <span style="color:var(--text-secondary);">You need a <b>public</b> and <b>private</b> API key. The public key
+            can be shared; the private key must be kept secret.</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <i class="fas fa-arrow-right" style="color:var(--primary);"></i>
+          <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> and expect a
+            <b>JWT payload</b> in the request body.</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <i class="fas fa-lock" style="color:var(--primary);"></i>
+          <span style="font-weight:500;">The <code>Authorization</code> header must contain a Bearer token: an
+            <b>HMAC-SHA-256 signature</b> of the JWT payload, generated with your private API key.</span>
+        </div>
+        <div style="margin-bottom:10px;">
+          <i class="fas fa-user-check" style="color:var(--primary);"></i>
+          <span>If your session is already authenticated to WebCTRL, a signature is not required. This means API keys
+            are unnecessary when invoked by JavaScript from an add-on's main page that is accessed by a logged-in user
+            (which is precisely how these documentation pages allow users to test endpoints).</span>
+        </div>
+        <pre style="margin:18px 0 0 0;"><code class="language-http">Authorization: Bearer &lt;HMAC-SHA-256 signature of JWT payload&gt;
+Content-Type: application/json
+Accept: application/json</code></pre>
+      </div>
+
+      <div class="api-info-card api-info-info">
+        <div class="api-info-header">
+          <i class="fas fa-info-circle" style="color:var(--info);"></i>
+          <span style="font-size:17px;font-weight:600;">How it works</span>
+        </div>
+        <div style="color:var(--text-secondary);margin-bottom:8px;">
+          The server verifies your identity by recomputing the signature from the JWT payload and comparing it to the
+          Authorization header. <b>Your private key is never sent over the network</b>, so it cannot be intercepted by
+          packet sniffers. <span style="color:var(--warning);font-weight:500;">However, keep in mind that the JWT
+            payload will be unencrypted and visible if insecure HTTP is used.</span> The public key is included in the
+          JWT payload and is merely used as an identifier so the server knows which private key to check the signature
+          against.
+        </div>
+      </div>
+
+      <div class="api-info-card api-info-success">
+        <div class="api-info-header">
+          <i class="fas fa-list-alt" style="color:var(--success);"></i>
+          <span style="font-size:17px;font-weight:600;">JWT Payload Fields</span>
+        </div>
+        <ul style="margin-left:10px;margin-bottom:0px;">
+          <li><a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.1"
+              target="_blank"><code>iss</code></a>: Your public API key</li>
+          <li><a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.3"
+              target="_blank"><code>aud</code></a>: The target API endpoint</li>
+          <li><a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7"
+              target="_blank"><code>jti</code></a>: A random UUID</li>
+          <li><a href="https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6"
+              target="_blank"><code>iat</code></a>: Time of JWT creation (number of seconds since the epoch)</li>
+          <li><code>data</code>: JSON data for the API endpoint</li>
+        </ul>
+        <div style="margin-top:12px;color:var(--text-secondary);font-size:15px;">
+          <i class="fas fa-info-circle" style="color:var(--success);"></i>
+          &nbsp;If your session is already authenticated to WebCTRL, you should submit the <code>data</code> field
+          directly as the request body without wrapping it inside a JWT.
+        </div>
+      </div>
+
+      <div class="api-info-card api-info-error">
+        <div class="api-info-header">
+          <i class="fas fa-shield-alt" style="color:var(--error);"></i>
+          <span style="font-size:17px;font-weight:600;">Security Notes</span>
+        </div>
+        <ul style="margin-left:10px;margin-bottom:0;">
+          <li>JWTs are only accepted if generated within <b>5 minutes</b> of the current time, as indicated by the
+            <code>iat</code> field.
+          </li>
+          <li>Each <code>jti</code> (nonce) can only be used once; repeated requests with the same <code>jti</code> are
+            rejected (cached for 5 minutes).</li>
+          <li>The combination of <code>iat</code> expiration and <code>jti</code> nonces helps to prevent replay
+            attacks.</li>
+          <li>The <code>aud</code> field is validated as well, and it must match the endpoint the request is sent to.
+          </li>
+          <li>A rate limit of <b>2000 requests per minute</b> per API key is enforced.</li>
+          <li>There is a <b>16 KB limit</b> on the total size of the request body.</li>
+        </ul>
+      </div>
+
+      <div class="api-info-card api-info-primary-light" style="margin-bottom:0;">
+        <div class="api-info-header">
+          <i class="fas fa-code" style="color:var(--primary);"></i>
+          <span style="font-size:17px;font-weight:600;">SDKs &amp; Examples</span>
+        </div>
+        <div style="color:var(--text-secondary);margin-bottom:10px;">
+          <span style="font-weight:500;color:var(--primary);"><i class="fab fa-js-square"></i> <a href="#js-sdk"
+              onclick="event.preventDefault();document.querySelector('[data-target=js-sdk]').click();"
+              style="color:var(--primary);text-decoration:underline;">JavaScript</a>:</span><br>
+          A JavaScript SDK is provided for use with HTML content controls in graphics, or webpages served by other
+          add-ons.
+        </div>
+        <div style="color:var(--text-secondary);margin-bottom:10px;">
+          <span style="font-weight:500;color:var(--primary);"><i class="fa-solid fa-terminal"></i> <a href="#ps-sdk"
+              onclick="event.preventDefault();document.querySelector('[data-target=ps-sdk]').click();"
+              style="color:var(--primary);text-decoration:underline;">PowerShell</a>:</span><br>
+          A PowerShell module is available for automated scripting and CLI use cases.
+        </div>
+        <div style="color:var(--text-secondary);">
+          <span style="font-weight:500;color:var(--primary);"><i class="fas fa-cogs"></i> Custom Clients:</span><br>
+          You are free to write your own client implementation in any language, following the authentication and request
+          principles described above.
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript SDK Section -->
+    <div id="js-sdk" class="api-section">
+      <div class="section-header">
+        <h2><i class="fab fa-js-square"></i> JavaScript SDK</h2>
+      </div>
+      <div class="api-desc" style="margin-bottom:18px;">
+        The JavaScript SDK provides a convenient way to interact with the API from HTML content controls within WebCTRL
+        graphics, or webpages served by other add-ons.
+      </div>
+      <div class="api-example-card"
+        style="margin-bottom:18px;padding:18px 22px 14px 22px;border-radius:8px;background:var(--primary-fade);box-shadow:0 2px 8px var(--sidebar-toggle-shadow);">
+        <div class="api-info-header" style="gap:10px;margin-bottom:8px;align-items:center;">
+          <i class="fas fa-code" style="color:var(--info);font-size:20px;"></i>
+          <span style="font-size:16px;font-weight:600;">Example Usage</span>
+        </div>
+        <pre style="margin:0 0 8px 0;background:var(--background);padding:12px 14px;border-radius:6px;"><code class="language-html">&lt;script src="/RestAPI/docs/api.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    (async () =&gt; {
+        const client = new WebCTRLAPIClient();
+        // client.retryCount = 3;
+        // client.retryDelay = 30000;
+        // client.timeout = 30000;
+        const result = await client.sendRequest('ResolveGQL', { path: '~parent' });
+        console.log(result);
+    })();
+&lt;/script&gt;</code></pre>
+      </div>
+      <div class="api-retry-note"
+        style="margin-bottom:18px;padding:12px 16px;border-radius:7px;background:var(--api-retry-note-bg);border-left:4px solid var(--api-retry-note-border);">
+        <i class="fas fa-rotate-right" style="color:var(--api-retry-note-border);font-size:16px;"></i>
+        &nbsp;<b>Automatic Retries:</b> The <code>sendRequest</code> method will automatically retry requests if the
+        server responds with <b>409 (Conflict)</b> or <b>429 (Too Many Requests)</b>.<br>
+        <span style="margin-left:22px;">It will retry up to <b><code>retryCount</code></b> times (default: 3), waiting
+          <b><code>retryDelay</code></b> milliseconds (default: 30000) between attempts for 429 responses. This helps
+          your code gracefully handle rate limits and nonce collisions</span>
+      </div>
+      <div class="api-desc api-note" style="margin-bottom:12px;">
+        <i class="fas fa-map-marker-alt" style="color:var(--info);font-size:15px;"></i>
+        &nbsp;When applicable, a <code>contextDBID</code> key will be automatically added to requests to specify the
+        session's current location.
+      </div>
+      <div class="api-desc api-note" style="margin-bottom:12px;">
+        <i class="fas fa-key" style="color:var(--primary);font-size:15px;"></i>
+        &nbsp;The current session context is used to authenticate requests when API keys are unspecified. If you need to
+        explicitly specify a server URL or API keys:
+        <pre
+          style="margin:8px 0 0 0;background:var(--background);padding:8px 12px;border-radius:6px;"><code class="language-javascript">new WebCTRLAPIClient('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY');</code></pre>
+      </div>
+      <div style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">
+        <i class="fas fa-lightbulb" style="color:var(--warning);font-size:15px;"></i>
+        &nbsp;You can use this SDK in any modern browser environment. It is not designed to be used in Node.js or other
+        non-browser JavaScript environments, but it can be adapted for such uses if necessary.
+      </div>
+      <div class="api-desc" style="margin-bottom:0;">
+        <i class="fas fa-file-code" style="color:var(--primary);font-size:15px;"></i>
+        &nbsp;Refer to <a href="./viewer.html?script=.%2Fapi.js" target="_blank"
+          style="color:var(--primary);text-decoration:underline;"><code>api.js</code></a> for full implementation
+        details.
+      </div>
+    </div>
+
+    <!-- PowerShell SDK Section -->
+    <div id="ps-sdk" class="api-section">
+      <div class="section-header">
+        <h2><i class="fa-solid fa-terminal"></i> PowerShell SDK</h2>
+      </div>
+      <div class="api-desc" style="margin-bottom:18px;">
+        This PowerShell module is designed for scripted automation and CLI use cases.
+      </div>
+      <div class="api-info-card api-info-success"
+        style="padding:18px 22px 14px 22px;margin-bottom:18px;box-shadow:0 2px 8px var(--sidebar-toggle-shadow);border-radius:8px;display:flex;align-items:center;gap:14px;">
+        <i class="fas fa-download" style="font-size:22px;color:var(--success);"></i>
+        <span style="font-size:16px;color:var(--text-secondary);">
+          <b>Download:</b> <a href="./WebCTRLAPIClient.zip" target="_blank" download
+            style="color:var(--success);font-weight:600;text-decoration:underline;">WebCTRLAPIClient.zip</a><br>
+          <span style="font-size:15px;color:var(--text-secondary);font-weight:400;">Unzip it to any folder on your
+            system, then reference the module as shown below.</span>
+        </span>
+      </div>
+      <div class="api-example-card"
+        style="margin-bottom:18px;padding:18px 22px 14px 22px;border-radius:8px;background:var(--primary-fade);box-shadow:0 2px 8px var(--sidebar-toggle-shadow);">
+        <div class="api-info-header" style="gap:10px;margin-bottom:8px;align-items:center;">
+          <i class="fas fa-code" style="color:var(--info);font-size:20px;"></i>
+          <span style="font-size:16px;font-weight:600;">Example Usage</span>
+        </div>
+        <pre style="margin:0 0 8px 0;background:var(--background);padding:12px 14px;border-radius:6px;"><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+# $client.config.retryCount = 3
+# $client.config.retryDelay = 30000
+# $client.config.timeout = 30000
+$client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
+      </div>
+      <div class="api-retry-note"
+        style="margin-bottom:18px;padding:12px 16px;border-radius:7px;background:var(--api-retry-note-bg);border-left:4px solid var(--api-retry-note-border);">
+        <i class="fas fa-rotate-right" style="color:var(--api-retry-note-border);font-size:16px;"></i>
+        &nbsp;<b>Automatic Retries:</b> The <code>sendRequest</code> method will automatically retry requests if the
+        server responds with <b>409 (Conflict)</b> or <b>429 (Too Many Requests)</b>.<br>
+        <span style="margin-left:22px;">It will retry up to <b><code>retryCount</code></b> times (default: 3), waiting
+          <b><code>retryDelay</code></b> milliseconds (default: 30000) between attempts for 429 responses. This helps
+          your code gracefully handle rate limits and nonce collisions</span>
+      </div>
+      <div class="api-desc api-note" style="margin-bottom:12px;">
+        <i class="fas fa-lightbulb" style="color:var(--warning);font-size:15px;"></i>
+        &nbsp;This module is compatible with PowerShell versions 5.1 and later.
+      </div>
+      <div class="api-desc" style="margin-bottom:0;">
+        <i class="fas fa-file-code" style="color:var(--primary);font-size:15px;"></i>
+        &nbsp;Refer to <a href="./viewer.html?script=.%2FWebCTRLAPIClient%2FWebCTRLAPIClient.psm1" target="_blank"
+          style="color:var(--primary);text-decoration:underline;"><code>WebCTRLAPIClient.psm1</code></a> for full
+        implementation details.
+      </div>
+    </div>
+
+    <!-- ResolveGQL Section -->
+    <div id="resolve-gql" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-search"></i> ResolveGQL</h2>
+        <span class="method-badge">POST /RestAPI/api/ResolveGQL</span>
+      </div>
+      <div class="api-desc">
+        This endpoint resolves a GQL path to retrieve details about the resolved node. When applicable, relative GQL
+        paths will be resolved against the session's current context. Which means <code>~parent</code> will resolve
+        correctly when this endpoint is called from an HTML content control in a WebCTRL graphic.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="ResolveGQL-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-path" class="api-param-name">path <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">The GQL path to resolve
+                (string), or the DBID of the node to resolve (integer). An empty path resolves to the session's current
+                context or the root of the geo tree.</span>
+              <input type="text" id="ResolveGQL-param-path" name="ResolveGQL-param-path" placeholder="GQL path or DBID">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-expression" class="api-param-name">expression <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, evaluates this
+                expression against the resolved node(s) and includes the result in the response. Multiple expressions may be specified as a JSON array.</span>
+              <input type="text" id="ResolveGQL-param-expression" name="ResolveGQL-param-expression"
+                placeholder="Expression to evaluate">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-listAttributes" class="api-param-name">listAttributes <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, the response will include a list of attributes for the resolved
+                node. Default: <code>false</code>.</span>
+              <input type="checkbox" id="ResolveGQL-param-listAttributes">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-fieldAccess" class="api-param-name">fieldAccess <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, information may be retrieved from devices in the field. It is
+                suggested to leave this false unless you need it. Default: <code>false</code>.</span>
+              <input type="checkbox" id="ResolveGQL-param-fieldAccess">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-includeChildren" class="api-param-name">includeChildren <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, the response will
+                include the immediate children of the resolved node. Default: <code>false</code>.</span>
+              <input type="checkbox" id="ResolveGQL-param-includeChildren">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-childFilter" class="api-param-name">childFilter <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">A comma-separated list of node
+                types to include when returning children. If omitted, all child node types are included. Ignored if
+                <code>includeChildren</code> is <code>false</code>. When constructing this parameter manually, you should use a JSON array
+                instead of a comma-delimited string.</span>
+              <input type="text" id="ResolveGQL-param-childFilter" name="ResolveGQL-param-childFilter"
+                placeholder="e.g. AREA,BEQU,BNET">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-contextDBID" class="api-param-name">contextDBID <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, this DBID will be
+                used as the session's context for resolving relative paths. This field is auto-populated by the
+                JavaScript SDK.</span>
+              <input type="text" id="ResolveGQL-param-contextDBID" name="ResolveGQL-param-contextDBID"
+                inputmode="numeric" placeholder="DBID (integer)" oninput="stripNonDigits(this)">
+            </div>
+            <div class="api-param-div">
+              <label for="ResolveGQL-param-relative" class="api-param-name">relative <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, resolves the path
+                relative to the session's current context. If false or if no context, resolves from the root of the geo
+                tree. Default: <code>true</code>.</span>
+              <input type="checkbox" id="ResolveGQL-param-relative" checked>
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="ResolveGQL-loading" style="display:none;vertical-align:middle;">
+              <i class="fas fa-spinner fa-spin" style="color:var(--primary);font-size:18px;"></i>
+            </span>
+          </div>
+        </form>
+      </div>
+      <div id="ResolveGQL-demo-result" class="api-demo-result">
+        <div class="api-card-header"><i class="fas fa-reply" style="color:var(--warning);"></i> Response</div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="ResolveGQL-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab active" data-tab="js"><i class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+console.log(await client.sendRequest('ResolveGQL', { path: '~parent' }));
+console.log(await client.sendRequest('ResolveGQL', {
+  path: '#office_area',
+  expression: ['~actions/0.value'],
+  listAttributes: false,
+  fieldAccess: false,
+  includeChildren: true,
+  childFilter: ['AREA'],
+  relative: false
+}));</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('ResolveGQL', @{ path='#main_floor' })
+$client.sendRequest('ResolveGQL', @{
+  path = '0/0'
+  expression = @('~actions/0.value')
+  listAttributes = $false
+  fieldAccess = $false
+  includeChildren = $true
+  childFilter = @('AREA')
+  contextDBID = 1028
+  relative = $true
+})</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('ResolveGQL', () => {
+          const pathVal = document.getElementById('ResolveGQL-param-path').value.trim();
+          let path;
+          if (pathVal.length > 0 && /^\d+$/.test(pathVal)) {
+            path = BigInt(pathVal);
+          } else {
+            path = pathVal;
+          }
+
+          let contextDBIDVal = document.getElementById('ResolveGQL-param-contextDBID').value.trim();
+          let contextDBID = contextDBIDVal && /^\d+$/.test(contextDBIDVal) ? BigInt(contextDBIDVal) : undefined;
+
+          let childFilterVal = document.getElementById('ResolveGQL-param-childFilter').value.trim();
+          let childFilter = undefined;
+          if (childFilterVal) {
+            childFilter = childFilterVal.split(',').map(s => s.trim()).filter(Boolean);
+          }
+
+          let expressionVal = document.getElementById('ResolveGQL-param-expression').value?.trim();
+          let expression;
+          if (expressionVal) {
+            try {
+              const parsed = JSON.parse(expressionVal);
+              if (Array.isArray(parsed) && parsed.every(e => typeof e === 'string')) {
+                expression = parsed;
+              } else {
+                expression = expressionVal;
+              }
+            } catch {
+              expression = expressionVal;
+            }
+          } else {
+            expression = undefined;
+          }
+
+          let req = {
+            path,
+            relative: document.getElementById('ResolveGQL-param-relative').checked,
+            listAttributes: document.getElementById('ResolveGQL-param-listAttributes').checked,
+            fieldAccess: document.getElementById('ResolveGQL-param-fieldAccess').checked,
+            includeChildren: document.getElementById('ResolveGQL-param-includeChildren').checked
+          };
+          if (typeof expression !== 'undefined') req.expression = expression;
+          if (typeof contextDBID !== 'undefined') req.contextDBID = contextDBID;
+          if (typeof childFilter !== 'undefined') req.childFilter = childFilter;
+          return req;
+        });
+      </script>
+    </div>
+
+    <!-- ExecCommand Section -->
+    <div id="exec-command" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-terminal"></i> ExecCommand</h2>
+        <span class="method-badge">POST /RestAPI/api/ExecCommand</span>
+      </div>
+      <div class="api-desc">
+        This endpoint is used to run manual commands on the server. Specify a command string to execute, and optionally
+        provide a <code>contextDBID</code> to set the current location context for the command.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="ExecCommand-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="ExecCommand-param-command" class="api-param-name">command <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">The manual command to
+                execute.</span>
+              <input type="text" id="ExecCommand-param-command" name="command" placeholder="Enter command" required>
+            </div>
+            <div class="api-param-div">
+              <label for="ExecCommand-param-splitLines" class="api-param-name">splitLines <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, the output will be split into an array of lines. Default:
+                <code>false</code>.</span>
+              <input type="checkbox" id="ExecCommand-param-splitLines" checked>
+            </div>
+            <div class="api-param-div">
+              <label for="ExecCommand-param-contextDBID" class="api-param-name">contextDBID <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, this DBID will be
+                used as the current location. This field is auto-populated by the JavaScript SDK.</span>
+              <input type="text" id="ExecCommand-param-contextDBID" name="contextDBID" placeholder="DBID (integer)"
+                oninput="stripNonDigits(this)">
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="ExecCommand-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="ExecCommand-demo-result" class="api-demo-result">
+        <div class="api-card-header"><i class="fas fa-reply" style="color:var(--warning);"></i> Response</div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="ExecCommand-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+console.log(await client.sendRequest('ExecCommand', { command: 'cd #device_01_g5re | modstat' }));</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('ExecCommand', () => {
+          const commandVal = document.getElementById('ExecCommand-param-command').value.trim();
+          if (!commandVal) {
+            return { command: '' };
+          }
+          let splitLines = document.getElementById('ExecCommand-param-splitLines').checked;
+          let contextDBIDVal = document.getElementById('ExecCommand-param-contextDBID').value.trim();
+          let contextDBID = contextDBIDVal && /^\d+$/.test(contextDBIDVal) ? BigInt(contextDBIDVal) : undefined;
+          let req = { command: commandVal };
+          if (splitLines) req.splitLines = true;
+          if (typeof contextDBID !== 'undefined') req.contextDBID = contextDBID;
+          if (devmode) req.dev = true;
+          return req;
+        });
+      </script>
+    </div>
+    <!-- GetSchema Section -->
+    <div id="get-schema" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-file-alt"></i> GetSchema</h2>
+        <span class="method-badge">POST /RestAPI/api/GetSchema</span>
+      </div>
+      <div class="api-desc">
+        Retrieve the JSON schema used to validate input for an API endpoint. You can also check the latest schemas on
+        the <a href="https://github.com/automatic-controls/rest-api-addon/tree/main/src/aces/webctrl/restapi/api/exec"
+          target="_blank">GitHub repository</a>
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="GetSchema-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="GetSchema-param-endpoint" class="api-param-name">endpoint <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">The API endpoint to retrieve the schema for (case-insensitive).</span>
+              <input type="text" id="GetSchema-param-endpoint" name="endpoint" placeholder="Enter endpoint name"
+                required>
+            </div>
+            <div class="api-param-div">
+              <label for="GetSchema-param-verbose" class="api-param-name">verbose <span class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, the returned schema will include additional description fields. Default: <code>false</code>.</span>
+              <input type="checkbox" id="GetSchema-param-verbose" name="verbose">
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="GetSchema-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="GetSchema-demo-result" class="api-demo-result">
+        <div class="api-card-header"><i class="fas fa-reply" style="color:var(--warning);"></i> Response</div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="GetSchema-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+console.log(await client.sendRequest('GetSchema', { endpoint: 'ResolveGQL' }));</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('GetSchema', () => {
+          const endpointVal = document.getElementById('GetSchema-param-endpoint').value.trim();
+          const verboseVal = document.getElementById('GetSchema-param-verbose').checked;
+          return { endpoint: endpointVal, verbose: verboseVal };
+        });
+      </script>
+    </div>
+
+    <!-- Response Codes Section -->
+    <div class="extra-section" id="response-codes">
+      <div class="section-header">
+        <h2><i class="fas fa-exclamation-circle"></i> HTTP Response Codes</h2>
+      </div>
+
+      <div class="response-codes">
+        <div class="code-card">
+          <h4><span class="status-code">200</span> Success</h4>
+          <p>Operation successful.</p>
+        </div>
+
+        <div class="code-card">
+          <h4><span class="status-code">400</span> Bad Request</h4>
+          <p>Your request is malformed (e.g, missing required parameters).</p>
+        </div>
+
+        <div class="code-card">
+          <h4><span class="status-code">403</span> Forbidden</h4>
+          <p>You are not authorized to access this resource. (e.g, invalid JWT signature)</p>
+        </div>
+
+        <div class="code-card">
+          <h4><span class="status-code">404</span> Not Found</h4>
+          <p>The endpoint was not found. (e.g, the RestAPI add-on is currently disabled)</p>
+        </div>
+
+        <div class="code-card">
+          <h4><span class="status-code">409</span> Conflict</h4>
+          <p>A nonce collision occurred. Please try again. (Nonces are used to prevent replay attacks.)</p>
+        </div>
+
+        <div class="code-card">
+          <h4><span class="status-code">429</span> Too Many Requests</h4>
+          <p>You have exceeded the rate limit of 2000 requests per minute per API key. Please try again later.</p>
+        </div>
+
+        <div class="code-card">
+          <h4><span class="status-code">500</span> Internal Server Error</h4>
+          <p>An unexpected internal server error occurred.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>API Documentation | <a href="https://github.com/automatic-controls/rest-api-addon" target="_blank">GitHub</a> |
+        Built with ❤️ for developers </p>
+    </div>
+  </div>
+
+  <script>
+    // Independent tab logic for each tab group
+    document.querySelectorAll('.api-tabs-container').forEach(container => {
+      const tabs = container.querySelectorAll('.api-tab');
+      const contents = container.querySelectorAll('.api-tab-content');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', function () {
+          tabs.forEach(t => t.classList.remove('active'));
+          contents.forEach(c => c.classList.remove('active'));
+          tab.classList.add('active');
+          // Only activate the content in this container matching the tab's data-tab
+          container.querySelectorAll('.api-tab-content').forEach(content => {
+            if (content.classList.contains(tab.dataset.tab + '-tab')) {
+              content.classList.add('active');
+            }
+          });
+        });
+      });
+    });
+
+    // Add copy buttons to all code blocks
+    function createCopyButton() {
+      const btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.type = 'button';
+      btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+      return btn;
+    }
+
+    function getCodeText(codeBlock) {
+      return codeBlock.innerText;
+    }
+
+    document.querySelectorAll('pre > code').forEach(code => {
+      // Avoid double-adding
+      if (code.parentElement.querySelector('.copy-btn')) return;
+      const btn = createCopyButton();
+      code.parentElement.appendChild(btn);
+      btn.addEventListener('click', async () => {
+        const text = getCodeText(code);
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.classList.add('copied');
+          btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+          setTimeout(() => {
+            btn.classList.remove('copied');
+            btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          }, 1400);
+        } catch (e) {
+          btn.innerHTML = '<i class="fas fa-times"></i> Error';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          }, 1400);
+        }
+      });
+    });
+
+    // Navigation functionality with history support
+    function showSection(target, pushState = true) {
+      // Remove active class from all items
+      document.querySelectorAll('.nav-item, .footer, .extra-section').forEach(i => {
+        i.classList.remove('active');
+      });
+      setTimeout(() => {
+        // Add active class to the correct nav item
+        const nav = document.querySelector('.nav-item[data-target="' + target + '"]');
+        if (nav) nav.classList.add('active');
+        // Hide all sections
+        document.querySelectorAll('.api-section').forEach(section => {
+          section.classList.remove('active');
+        });
+        // Show the selected section
+        const section = document.getElementById(target);
+        if (section) section.classList.add('active');
+
+        // Show footer and extra-section after a section is chosen
+        document.querySelectorAll('.footer, .extra-section').forEach(el => {
+          el.classList.add('active');
+        });
+      }, 0);
+      // Update URL hash and history
+      if (pushState) {
+        history.pushState({ section: target }, '', '#' + target);
+      }
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function (e) {
+        const target = this.getAttribute('data-target');
+        showSection(target);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', function (event) {
+      let section = (event.state && event.state.section) || location.hash.replace(/^#/, '') || 'summary';
+      showSection(section, false);
+    });
+
+    // On page load, show section from hash if present
+    window.addEventListener('DOMContentLoaded', function () {
+      let initial = location.hash.replace(/^#/, '') || 'summary';
+      showSection(initial, false);
+    });
+
+    // Sidebar toggle functionality
+    const sidebar = document.getElementById('sidebar');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+    const mainContent = document.querySelector('.main-content');
+
+    sidebarToggle.addEventListener('click', function () {
+      sidebar.classList.toggle('collapsed');
+      if (sidebar.classList.contains('collapsed')) {
+        sidebarToggleIcon.classList.remove('fa-angle-left');
+        sidebarToggleIcon.classList.add('fa-angle-right');
+      } else {
+        sidebarToggleIcon.classList.remove('fa-angle-right');
+        sidebarToggleIcon.classList.add('fa-angle-left');
+      }
+    });
+
+    // Responsive sidebar collapse on window resize
+    function handleSidebarCollapse() {
+      if (window.innerWidth <= 860) {
+        if (!sidebar.classList.contains('collapsed')) {
+          sidebar.classList.add('collapsed');
+          sidebarToggleIcon.classList.remove('fa-angle-left');
+          sidebarToggleIcon.classList.add('fa-angle-right');
+        }
+      }
+    }
+
+    // Initial check
+    handleSidebarCollapse();
+    // Listen for resize
+    window.addEventListener('resize', handleSidebarCollapse);
+
+    hljs.highlightAll();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Script Viewer</title>
+  <link rel="stylesheet" href="./docs.css">
+  <link rel="stylesheet" href="./lib/all.min.css">
+  <link rel="stylesheet" href="./lib/atom-one-dark.min.css">
+  <script src="./lib/highlight.min.js"></script>
+  <script src="./lib/powershell.min.js"></script>
+</head>
+
+<body>
+
+  <div
+    style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#181c24 0%,#23272e 100%);padding:0 0;width:100%;box-sizing:border-box;">
+    <div
+      style="background:var(--card-bg,#23272e);border-radius:16px;box-shadow:0 6px 32px rgba(0,0,0,0.25);padding:38px 32px 28px 32px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px;justify-content:center;width:100%;">
+        <div id="file-icon-container"
+          style="background:rgba(33,150,243,0.12);border-radius:50%;padding:12px;display:flex;align-items:center;justify-content:center;">
+          <i id="file-icon" class="fas fa-file-code" style="font-size:28px;color:var(--primary,#8a2be2);"></i>
+        </div>
+        <span id="filename"
+          style="font-size:1.25rem;font-weight:600;color:var(--text-primary,#f5f5f5);word-break:break-all;">Loading...</span>
+      </div>
+      <div
+        style="background:rgba(0,0,0,0.18);border-radius:10px;padding:0.5em 0.8em 0.8em 0.8em;box-shadow:0 2px 8px rgba(0,0,0,0.10);display:inline-block;max-width:100%;width:auto;">
+        <pre
+          style="margin:0;white-space:pre;overflow-x:auto;"><code id="code-block" class="language-javascript"></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Get query parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const scriptPath = urlParams.get('script');
+
+    if (scriptPath) {
+      // Set filename and icon
+      const filenameElement = document.getElementById('filename');
+      const fileIconElement = document.getElementById('file-icon');
+      // Show only the filename (last path element)
+      filenameElement.textContent = scriptPath.split('/').pop();
+
+      // Determine icon based on extension
+      const codeBlock = document.getElementById('code-block');
+      const ext = scriptPath.split('.').pop().toLowerCase();
+      if (ext === 'psm1') {
+        fileIconElement.className = 'fa-solid fa-terminal';
+        codeBlock.className = 'language-powershell';
+      } else if (ext === 'js') {
+        fileIconElement.className = 'fab fa-js-square';
+        codeBlock.className = 'language-javascript';
+      }
+
+      // Fetch and display the script content
+      fetch(scriptPath)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.text();
+        })
+        .then(data => {
+          codeBlock.textContent = data;
+
+          // Add copy buttons to all code blocks
+          function createCopyButton() {
+            const btn = document.createElement('button');
+            btn.className = 'copy-btn';
+            btn.type = 'button';
+            btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+            return btn;
+          }
+
+          function getCodeText(codeBlock) {
+            return codeBlock.innerText;
+          }
+
+          document.querySelectorAll('pre > code').forEach(code => {
+            // Avoid double-adding
+            if (code.parentElement.querySelector('.copy-btn')) return;
+            const btn = createCopyButton();
+            code.parentElement.appendChild(btn);
+            btn.addEventListener('click', async () => {
+              const text = getCodeText(code);
+              try {
+                await navigator.clipboard.writeText(text);
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+                setTimeout(() => {
+                  btn.classList.remove('copied');
+                  btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 1400);
+              } catch (e) {
+                btn.innerHTML = '<i class="fas fa-times"></i> Error';
+                setTimeout(() => {
+                  btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+                }, 1400);
+              }
+            });
+          });
+
+          // Highlight the code
+          hljs.highlightElement(codeBlock);
+        })
+        .catch(error => {
+          document.getElementById('filename').textContent = `Error loading ${scriptPath}`;
+          document.getElementById('code-block').textContent = `Error: ${error.message}`;
+        });
+    } else {
+      document.getElementById('filename').textContent = 'No script specified';
+      document.getElementById('code-block').textContent = 'Please provide a script parameter: ?script=path/to/script.js';
+    }
+  </script>
+</body>
+
+</html>

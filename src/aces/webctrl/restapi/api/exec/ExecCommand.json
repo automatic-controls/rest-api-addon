@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecCommand",
+  "description": "Execute a manual command on the server.",
+  "type": "object",
+  "properties": {
+    "command": {
+      "type": "string",
+      "description": "The manual command to execute.",
+      "minLength": 1
+    },
+    "splitLines": {
+      "type": "boolean",
+      "description": "If true, the output will be split into an array of lines. If false, the output will be a single string.",
+      "default": false
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "If provided, this DBID will be used as the current location."
+    },
+    "dev": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "command"
+  ],
+  "additionalProperties": false
+}

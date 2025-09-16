@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Key Manager</title>
+  <link rel="stylesheet" href="../../../../../root/webapp/docs/lib/all.min.css">
+  <link rel="stylesheet" href="../../../../../root/webapp/docs/main.css">
+  <script>
+    function obfuscate(val) {
+      if (val == null) { return val; }
+      var size = val.length;
+      var retVal = new String();
+      for (var i = size - 1; i >= 0; i--) {
+        retVal += String.fromCharCode(val.charCodeAt(i) ^ 4);
+      }
+      return retVal;
+    }
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>API Key Manager</h1>
+      <p class="subtitle">Create, manage, and revoke API keys for secure access</p>
+      <a href="../../../../../root/webapp/docs/index.html" target="_blank"
+        style="display:inline-block;margin-top:10px;padding:7px 18px;background:var(--info);color:var(--text-primary);border-radius:6px;font-weight:600;text-decoration:none;box-shadow:0 2px 8px var(--border);">
+        <i class="fas fa-book" style="margin-right:7px;color:var(--text-primary);"></i> Documentation
+      </a>
+    </header>
+
+    <main>
+      <div class="card">
+        <h2 class="card-title">
+          <i class="fas fa-key"></i> Create New API Key
+        </h2>
+        <form id="create-key-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div class="form-group">
+            <label class="alone" for="key-name">Name</label>
+            <input type="text" id="key-name" placeholder="Enter a descriptive name for this key" required>
+          </div>
+
+          <div class="form-group">
+            <label class="alone" for="key-operator">Operator</label>
+            <input type="text" id="key-operator"
+              placeholder="Enter operator login name (leave blank to create an unrestricted admin key)">
+          </div>
+
+          <div class="form-group">
+            <label class="alone">Endpoint Permissions</label>
+            <div id="permissions-container">
+              <!-- Permissions will be loaded here dynamically -->
+              <div class="loading"></div>
+            </div>
+          </div>
+
+          <button type="submit">
+            <i>+</i> Generate New Key
+          </button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">
+          <i class="fas fa-list-alt"></i> Active API Keys
+        </h2>
+        <div id="key-list-container">
+          <div class="loading"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div class="notification" id="notification">
+    <div class="notification-content">
+      <span class="notification-icon"><i class="fas fa-info-circle" style="color:var(--info);"></i></span>
+      <span class="notification-message" id="notification-message">Notification message</span>
+    </div>
+  </div>
+
+  <div class="modal" id="private-key-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Private Key Generated</h3>
+        <button class="close-modal">&times;</button>
+      </div>
+      <p>Your private key has been generated. Please save it securely as it will not be shown again.</p>
+      <div class="private-key" id="private-key-display"></div>
+      <button class="copy-btn" id="copy-private-key">
+        <i class="fas fa-clipboard"></i> Copy to Clipboard
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const PREFIX = '__PREFIX__';
+    let endpoints = [];
+
+    {
+      const operatorInput = document.getElementById('key-operator');
+      operatorInput.value = '__OPERATOR__';
+      operatorInput.disabled = '__ADMIN__'!=='true';
+    }
+
+    // DOM Elements
+    const createKeyForm = document.getElementById('create-key-form');
+    const permissionsContainer = document.getElementById('permissions-container');
+    const keyListContainer = document.getElementById('key-list-container');
+    const notification = document.getElementById('notification');
+    const notificationMessage = document.getElementById('notification-message');
+    const privateKeyModal = document.getElementById('private-key-modal');
+    const privateKeyDisplay = document.getElementById('private-key-display');
+    const copyPrivateKeyBtn = document.getElementById('copy-private-key');
+    const closeModalBtn = document.querySelector('.close-modal');
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        // Load endpoints
+        const endpointsResponse = await fetch(`${PREFIX}/index?action=endpoints`);
+        endpoints = await endpointsResponse.json();
+
+        // Render permissions checkboxes
+        renderPermissions();
+
+        // Load existing keys
+        await loadKeys();
+      } catch (error) {
+        showNotification('Failed to load data. Please refresh the page.', 'error');
+        console.error('Error loading data:', error);
+      }
+    });
+
+    // Render permissions checkboxes
+    function renderPermissions() {
+      permissionsContainer.innerHTML = '';
+
+      if (endpoints.length === 0) {
+        permissionsContainer.innerHTML = '<p>No endpoints available</p>';
+        return;
+      }
+
+      // Add Administrator checkbox
+      const adminDiv = document.createElement('div');
+      adminDiv.className = 'permission-item';
+      adminDiv.innerHTML = `
+        <input type="checkbox" id="perm-admin">
+        <label for="perm-admin" style="font-weight:600;color:var(--warning);"><i class="fas fa-user-shield" style="color:var(--warning);margin-right:6px;"></i>Everything</label>
+        <span style="color:var(--text-secondary);font-size:13px;margin-left:10px;">Full access to all endpoints</span>
+      `;
+      permissionsContainer.appendChild(adminDiv);
+
+      // Add endpoint checkboxes
+      endpoints.forEach((endpoint, index) => {
+        const permissionItem = document.createElement('div');
+        permissionItem.className = 'permission-item';
+        permissionItem.innerHTML = `
+          <input type="checkbox" id="perm-${index}" data-index="${index}">
+          <label for="perm-${index}">${endpoint}</label>
+        `;
+        permissionsContainer.appendChild(permissionItem);
+      });
+
+      // Admin logic: check/uncheck all, disable/enable
+      const adminCheckbox = document.getElementById('perm-admin');
+      const endpointCheckboxes = Array.from(permissionsContainer.querySelectorAll('input[type="checkbox"][id^="perm-"]:not(#perm-admin)'));
+      adminCheckbox.addEventListener('change', function () {
+        if (adminCheckbox.checked) {
+          endpointCheckboxes.forEach(cb => { cb.checked = true; cb.disabled = true; });
+        } else {
+          endpointCheckboxes.forEach(cb => { cb.checked = false; cb.disabled = false; });
+        }
+      });
+    }
+
+    // Load and display existing API keys
+    async function loadKeys() {
+      try {
+        keyListContainer.innerHTML = '<div class="loading"></div>';
+
+        const response = await fetch(`${PREFIX}/index?action=load`);
+        const keys = await response.json();
+
+        if (keys.length === 0) {
+          keyListContainer.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-key" style="color:var(--primary);"></i>
+              <h3>No API Keys Found</h3>
+              <p>Create your first API key using the form above</p>
+            </div>
+                    `;
+          return;
+        }
+
+        renderKeyList(keys);
+      } catch (error) {
+        keyListContainer.innerHTML = '<p class="error">Failed to load API keys</p>';
+        showNotification('Failed to load API keys', 'error');
+        console.error('Error loading keys:', error);
+      }
+    }
+
+    // Render the list of API keys
+    function renderKeyList(keys) {
+      keyListContainer.innerHTML = '';
+
+      const keyList = document.createElement('div');
+      keyList.className = 'key-list';
+
+      keys.forEach(key => {
+        const keyCard = document.createElement('div');
+        keyCard.className = 'key-card';
+
+        let permissionsHTML = '';
+        if (key.perms==-1){
+          permissionsHTML += `
+                <div class="permission-item">
+                  <input type="checkbox" checked disabled>
+                  <label style="font-weight:600;color:var(--warning);"><i class="fas fa-user-shield" style="color:var(--warning);margin-right:6px;"></i>Everything</label>
+                </div>
+              `;
+        }else{
+          // Convert permissions to binary string for display
+          const bigInt = BigInt(key.perms);
+          const unsigned = bigInt < 0n ? (1n << 64n) + bigInt : bigInt;
+          const permBits = unsigned.toString(2).padStart(endpoints.length, '0').split('').reverse();
+          endpoints.forEach((endpoint, index) => {
+            const hasPermission = permBits[index] === '1';
+            if (hasPermission) {
+              permissionsHTML += `
+                <div class="permission-item">
+                  <input type="checkbox" ${hasPermission ? 'checked' : ''} disabled>
+                  <label>${endpoint}</label>
+                </div>
+              `;
+            }
+          });
+        }
+
+        // Operator display
+        let operatorDisplay = '';
+        if (!key.operator || key.operator.trim() === '') {
+          operatorDisplay = `<span style="color:var(--warning);font-weight:600;background:var(--border);padding:2px 8px;border-radius:5px;">Unrestricted Administrator</span>`;
+        } else {
+          operatorDisplay = `<span style="color:var(--info);font-weight:500;background:var(--border);padding:2px 8px;border-radius:5px;">${key.operator}</span>`;
+        }
+
+        keyCard.innerHTML = `
+            <div class="key-header">
+              <div class="key-name">${key.name}</div>
+              <button class="secondary delete-btn" data-key="${key.id}">
+                <i class="fas fa-trash" style="color:var(--error);"></i> Delete
+              </button>
+            </div>
+            <div class="key-id">ID: ${key.id}</div>
+            <div class="key-operator">Operator: ${operatorDisplay}</div>
+            <div class="permissions">
+              <h4>Endpoint Permissions:</h4>
+              ${permissionsHTML}
+            </div>
+          `;
+
+        keyList.appendChild(keyCard);
+      });
+
+      keyListContainer.appendChild(keyList);
+
+      // Add event listeners to delete buttons
+      document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', async (e) => {
+          const keyId = e.target.closest('.delete-btn').dataset.key;
+          await deleteKey(keyId);
+        });
+      });
+    }
+
+    // Handle form submission for creating a new key
+    createKeyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const nameInput = document.getElementById('key-name');
+      const name = nameInput.value.trim();
+
+      const operatorInput = document.getElementById('key-operator');
+      const operator = operatorInput.value.trim();
+
+      if (!name) {
+        showNotification('Please enter a key name', 'warning');
+        return;
+      }
+
+      // Calculate permissions
+      let permissions;
+      const adminChecked = document.getElementById('perm-admin').checked;
+      if (adminChecked) {
+        permissions = -1;
+      } else {
+        permissions = 0n;
+        document.querySelectorAll('#permissions-container input[type="checkbox"]:checked').forEach(checkbox => {
+          if (checkbox.id !== 'perm-admin') {
+            const index = parseInt(checkbox.dataset.index);
+            permissions |= (1n << BigInt(index));
+          }
+        });
+        if (permissions === 0n) {
+          showNotification('Please select at least one permission', 'warning');
+          return;
+        }
+      }
+
+      try {
+        const response = await fetch(`${PREFIX}/index?action=new`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `name=${encodeURIComponent(name)}&perms=${permissions.toString()}&operator=${encodeURIComponent(operator)}`
+        });
+
+        if (response.ok) {
+          const newKey = await response.json();
+
+          // Show private key in modal
+          privateKeyDisplay.textContent = obfuscate(newKey.key);
+          privateKeyModal.classList.add('show');
+
+          // Clear form
+          nameInput.value = '';
+          document.querySelectorAll('#permissions-container input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+          });
+
+          // Reload key list
+          await loadKeys();
+
+          showNotification('API key created successfully', 'success');
+        } else if (response.status === 404) {
+          showNotification('The specified operator does not exist.', 'error');
+        } else {
+          const errorText = await response.text();
+          showNotification(`Failed to create key: ${errorText}`, 'error');
+        }
+      } catch (error) {
+        showNotification('Failed to create API key', 'error');
+        console.error('Error creating key:', error);
+      }
+    });
+
+    // Delete an API key
+    async function deleteKey(keyId) {
+      if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`${PREFIX}/index?action=delete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `key=${encodeURIComponent(keyId)}`
+        });
+
+        if (response.ok) {
+          showNotification('API key deleted successfully', 'success');
+          await loadKeys();
+        } else if (response.status === 404) {
+          showNotification('API key not found', 'error');
+        } else {
+          showNotification('Failed to delete API key', 'error');
+        }
+      } catch (error) {
+        showNotification('Failed to delete API key', 'error');
+        console.error('Error deleting key:', error);
+      }
+    }
+
+    // Copy private key to clipboard
+    copyPrivateKeyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(privateKeyDisplay.textContent)
+        .then(() => {
+          showNotification('Private key copied to clipboard', 'success');
+        })
+        .catch(err => {
+          showNotification('Failed to copy private key', 'error');
+          console.error('Failed to copy:', err);
+        });
+    });
+
+    // Close modal
+    closeModalBtn.addEventListener('click', () => {
+      privateKeyModal.classList.remove('show');
+    });
+
+    // Show notification
+    function showNotification(message, type = 'info') {
+      notificationMessage.textContent = message;
+      notification.className = 'notification show ' + type;
+
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 5000);
+    }
+  </script>
+</body>
+
+</html>
