@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecGQL",
+  "description": "Retrieves and/or sets attribute values for specified nodes.",
+  "type": "object",
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "description": "A list of GQL paths or DBIDs to resolve.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "description": "A GQL path.",
+            "minLength": 1
+          },
+          {
+            "type": "integer",
+            "description": "A DBID."
+          }
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "get": {
+      "type": "array",
+      "description": "A list of GQL expressions to evaluate for each node.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "set": {
+      "type": "array",
+      "description": "A list of GQL expressions to evaluate and then set to the corresponding value.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "expression": {
+            "type": "string",
+            "description": "A GQL expression to evaluate for each node.",
+            "minLength": 1
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The value to set the result of the expression to."
+          }
+        },
+        "required": [
+          "expression",
+          "value"
+        ],
+        "additionalProperties": false
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "fieldAccess": {
+      "type": "boolean",
+      "description": "If true, information may be retrieved from devices in the field. It is suggested to leave this false unless you need it.",
+      "default": false
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "GQL paths in the `nodes` property will be resolved relative to this node. If omitted, paths will be resolved relative to the root of the geo tree."
+    }
+  },
+  "required": [
+    "nodes"
+  ],
+  "anyOf": [
+    {
+      "required": [
+        "get"
+      ]
+    },
+    {
+      "required": [
+        "set"
+      ]
+    }
+  ],
+  "additionalProperties": false
+}

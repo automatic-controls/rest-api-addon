@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Filter Builder</title>
+  <link rel="stylesheet" href="./lib/atom-one-dark.min.css">
+  <script src="./lib/highlight.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .header {
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #404040;
+      display: none; /* Hidden by default for iframe use */
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #4fc3f7;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #9e9e9e;
+      font-size: 13px;
+    }
+
+    .info-banner {
+      background: #2d4a5c;
+      border: 1px solid #4fc3f7;
+      border-radius: 4px;
+      padding: 10px 14px;
+      margin-bottom: 16px;
+      color: #4fc3f7;
+      font-size: 13px;
+      display: flex; /* Shown by default for iframe use */
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-banner i {
+      font-size: 16px;
+    }
+
+    .filter-container {
+      background: #252526;
+      border: 1px solid #404040;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .filter-type-selector {
+      margin-bottom: 16px;
+    }
+
+    .filter-type-selector label {
+      display: block;
+      margin-bottom: 6px;
+      color: #9e9e9e;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .filter-type-selector select {
+      width: 100%;
+      padding: 8px 12px;
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .filter-type-selector select:hover {
+      border-color: #4fc3f7;
+    }
+
+    .filter-type-selector select:focus {
+      outline: none;
+      border-color: #4fc3f7;
+      box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+    }
+
+    .filter-content {
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      padding: 14px;
+    }
+
+    .boolean-filter {
+      display: flex;
+      gap: 12px;
+    }
+
+    .boolean-filter button {
+      flex: 1;
+      padding: 10px;
+      background: #2d2d30;
+      border: 2px solid #404040;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .boolean-filter button:hover {
+      border-color: #4fc3f7;
+      background: #363636;
+    }
+
+    .boolean-filter button.active {
+      background: #4fc3f7;
+      border-color: #4fc3f7;
+      color: #1e1e1e;
+      font-weight: 600;
+    }
+
+    .logical-filter {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .logical-filter-item {
+      background: #252526;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      padding: 12px;
+      position: relative;
+    }
+
+    .logical-filter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .logical-filter-label {
+      color: #9e9e9e;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .remove-btn {
+      padding: 4px 10px;
+      background: #d32f2f;
+      border: none;
+      border-radius: 3px;
+      color: white;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .remove-btn:hover {
+      background: #b71c1c;
+    }
+
+    .add-btn {
+      width: 100%;
+      padding: 10px;
+      background: #2d2d30;
+      border: 2px dashed #404040;
+      border-radius: 4px;
+      color: #4fc3f7;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .add-btn:hover {
+      border-color: #4fc3f7;
+      background: #363636;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 6px;
+      color: #9e9e9e;
+      font-size: 12px;
+    }
+
+    .input-group input,
+    .input-group textarea,
+    .input-group select {
+      width: 100%;
+      padding: 8px 12px;
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-size: 14px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      transition: border-color 0.2s;
+    }
+
+    .input-group select {
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    .input-group textarea {
+      resize: vertical;
+      min-height: 60px;
+      line-height: 1.4;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: #4fc3f7;
+      box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+    }
+
+    .input-group select:hover {
+      border-color: #4fc3f7;
+    }
+
+    .input-group input::placeholder,
+    .input-group textarea::placeholder {
+      color: #666;
+    }
+
+    .type-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .type-tag {
+      padding: 6px 12px;
+      background: #2d2d30;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .type-tag-remove {
+      cursor: pointer;
+      color: #d32f2f;
+      font-weight: bold;
+      transition: color 0.2s;
+    }
+
+    .type-tag-remove:hover {
+      color: #f44336;
+    }
+
+    .type-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .type-input-row input {
+      flex: 1;
+    }
+
+    .type-input-row button {
+      padding: 8px 16px;
+      background: #4fc3f7;
+      border: none;
+      border-radius: 4px;
+      color: #1e1e1e;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 600;
+    }
+
+    .type-input-row button:hover {
+      background: #29b6f6;
+    }
+
+    .output-section {
+      background: #252526;
+      border: 1px solid #404040;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .output-header h2 {
+      font-size: 16px;
+      color: #4fc3f7;
+    }
+
+    .copy-btn {
+      padding: 8px 16px;
+      background: #4fc3f7;
+      border: none;
+      border-radius: 4px;
+      color: #1e1e1e;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-weight: 600;
+    }
+
+    .copy-btn:hover {
+      background: #29b6f6;
+    }
+
+    .copy-btn.copied {
+      background: #66bb6a;
+    }
+
+    .output-content {
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .output-content pre {
+      margin: 0;
+      padding: 14px;
+      overflow-x: auto;
+      background: transparent;
+    }
+
+    .output-content code {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre;
+      background: transparent;
+    }
+
+    .output-content .hljs {
+      background: transparent;
+      padding: 0;
+    }
+
+    .comparison-operator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .comparison-operator select {
+      flex: 0 0 auto;
+      min-width: 180px;
+      padding: 8px 12px;
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .comparison-operator select:hover {
+      border-color: #4fc3f7;
+    }
+
+    .comparison-operator select:focus {
+      outline: none;
+      border-color: #4fc3f7;
+      box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+    }
+
+    .comparison-operator input {
+      flex: 1;
+      padding: 8px 12px;
+      background: #1e1e1e;
+      border: 1px solid #404040;
+      border-radius: 4px;
+      color: #d4d4d4;
+      font-size: 14px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      transition: border-color 0.2s;
+    }
+
+    .comparison-operator input:focus {
+      outline: none;
+      border-color: #4fc3f7;
+      box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+    }
+
+    .hint {
+      color: #9e9e9e;
+      font-size: 12px;
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .actions button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .reset-btn {
+      background: #2d2d30;
+      color: #d4d4d4;
+      border: 2px solid #404040;
+    }
+
+    .reset-btn:hover {
+      background: #d32f2f;
+      color: white;
+      border-color: #d32f2f;
+    }
+
+    .nested-indicator {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 6px;
+      background: #4fc3f7;
+      color: #1e1e1e;
+      font-size: 10px;
+      border-radius: 3px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Filter Builder</h1>
+      <p>Build filters visually for SearchGQL intermediateFilter and leafFilter parameters</p>
+    </div>
+
+    <div class="info-banner" id="iframe-info">
+      <i class="fas fa-info-circle"></i>
+      <span>Make your changes below. Click the <strong>Close</strong> button when finished to apply the filter.</span>
+    </div>
+
+    <div class="output-section" id="load-json-section">
+      <div class="output-header">
+        <h2>Load Filter from JSON</h2>
+        <button class="copy-btn" id="load-json-btn">Load</button>
+      </div>
+      <div style="background: #1e1e1e; border: 1px solid #404040; border-radius: 4px; padding: 0; overflow: hidden;">
+        <textarea id="json-input" placeholder="Paste your filter JSON here..."
+          style="width: 100%; height: 42px; padding: 14px; background: transparent; border: none; color: #d4d4d4; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 13px; line-height: 1.6; resize: none; overflow: hidden; outline: none; box-sizing: border-box;"></textarea>
+      </div>
+      <div id="load-error"
+        style="display:none; padding: 10px; margin-top: 12px; background: #5c0000; border: 1px solid #d32f2f; border-radius: 4px; color: #ff6b6b;">
+        <strong>⚠ Error:</strong>
+        <div id="load-error-message" style="margin-top: 4px; font-size: 13px;"></div>
+      </div>
+    </div>
+
+    <div class="filter-container" id="root-filter">
+      <!-- Filter UI will be generated here -->
+    </div>
+
+    <div class="output-section">
+      <div class="output-header">
+        <h2>Generated JSON</h2>
+        <button class="copy-btn" id="copy-output">Copy</button>
+      </div>
+      <div id="validation-warning"
+        style="display:none; padding: 10px; margin-bottom: 12px; background: #5c3d00; border: 1px solid #ff9800; border-radius: 4px; color: #ffb74d;">
+        <strong>⚠ Schema Validation Warning:</strong>
+        <div id="validation-message" style="margin-top: 4px; font-size: 13px;"></div>
+      </div>
+      <div class="output-content">
+        <pre><code class="language-json" id="output"></code></pre>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="reset-btn" id="reset-btn">Reset Filter</button>
+    </div>
+  </div>
+
+  <script>
+    let filterCounter = 0;
+    let parentDefaultFilter = null; // Default filter value from parent window (for Reset button)
+
+    // Filter type definitions
+    const FILTER_TYPES = {
+      BOOLEAN: 'boolean',
+      AND: 'and',
+      OR: 'or',
+      NOT: 'not',
+      HAS_GQL: 'hasGQL',
+      HAS_TYPE: 'hasType',
+      COMPARISON: 'comparison'
+    };
+    const COMPARISON_OPS = ['equals', 'regex', 'greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual'];
+
+    // Initialize the root filter
+    function init() {
+      // If parent specified a default filter, load it instead of creating new
+      if (parentDefaultFilter !== null) {
+        try {
+          const json = JSON.parse(parentDefaultFilter);
+          const rootFilterId = loadFilterFromJSON(json, 'root-filter', null);
+          if (rootFilterId) {
+            renderExistingFilter('root-filter', rootFilterId);
+            updateOutput();
+            return;
+          }
+        } catch (e) {
+          // Fall back to default behavior
+        }
+      }
+      renderFilter('root-filter', null);
+      updateOutput();
+    }
+
+    // Render a filter UI (creates new filter)
+    function renderFilter(containerId, parentData) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const filterId = `filter-${filterCounter++}`;
+      const isNested = parentData !== null;
+
+      container.innerHTML = `
+        <div class="filter-type-selector">
+          <label for="${filterId}-type">Filter Type ${isNested ? '<span class="nested-indicator">Nested</span>' : ''}</label>
+          <select id="${filterId}-type" onchange="handleFilterTypeChange('${filterId}', '${containerId}', ${JSON.stringify(parentData).replace(/"/g, '&quot;')})">
+            <option value="${FILTER_TYPES.AND}">AND (all must match)</option>
+            <option value="${FILTER_TYPES.OR}">OR (any must match)</option>
+            <option value="${FILTER_TYPES.NOT}">NOT (inverse)</option>
+            <option value="${FILTER_TYPES.BOOLEAN}" selected>Boolean (true/false)</option>
+            <option value="${FILTER_TYPES.HAS_TYPE}">Has Type</option>
+            <option value="${FILTER_TYPES.HAS_GQL}">Has GQL Expression</option>
+            <option value="${FILTER_TYPES.COMPARISON}">Expression Comparison</option>
+          </select>
+        </div>
+        <div class="filter-content" id="${filterId}-content"></div>
+      `;
+
+      // Store filter data
+      if (!window.filterData) window.filterData = {};
+      window.filterData[filterId] = {
+        type: FILTER_TYPES.BOOLEAN,
+        value: true,
+        containerId: containerId,
+        parentData: parentData
+      };
+
+      renderFilterContent(filterId);
+      updateOutput();
+      return filterId;
+    }
+
+    // Render an existing filter (reuses filterId)
+    function renderExistingFilter(containerId, filterId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const data = window.filterData[filterId];
+      if (!data) return;
+
+      const isNested = data.parentData !== null;
+
+      container.innerHTML = `
+        <div class="filter-type-selector">
+          <label for="${filterId}-type">Filter Type ${isNested ? '<span class="nested-indicator">Nested</span>' : ''}</label>
+          <select id="${filterId}-type" onchange="handleFilterTypeChange('${filterId}', '${containerId}', ${JSON.stringify(data.parentData).replace(/"/g, '&quot;')})">
+            <option value="${FILTER_TYPES.AND}" ${data.type === FILTER_TYPES.AND ? 'selected' : ''}>AND (all must match)</option>
+            <option value="${FILTER_TYPES.OR}" ${data.type === FILTER_TYPES.OR ? 'selected' : ''}>OR (any must match)</option>
+            <option value="${FILTER_TYPES.NOT}" ${data.type === FILTER_TYPES.NOT ? 'selected' : ''}>NOT (inverse)</option>
+            <option value="${FILTER_TYPES.BOOLEAN}" ${data.type === FILTER_TYPES.BOOLEAN ? 'selected' : ''}>Boolean (true/false)</option>
+            <option value="${FILTER_TYPES.HAS_TYPE}" ${data.type === FILTER_TYPES.HAS_TYPE ? 'selected' : ''}>Has Type</option>
+            <option value="${FILTER_TYPES.HAS_GQL}" ${data.type === FILTER_TYPES.HAS_GQL ? 'selected' : ''}>Has GQL Expression</option>
+            <option value="${FILTER_TYPES.COMPARISON}" ${data.type === FILTER_TYPES.COMPARISON ? 'selected' : ''}>Expression Comparison</option>
+          </select>
+        </div>
+        <div class="filter-content" id="${filterId}-content"></div>
+      `;
+
+      data.containerId = containerId;
+      renderFilterContent(filterId);
+    }
+
+    // Handle filter type change
+    function handleFilterTypeChange(filterId, containerId, parentData) {
+      const select = document.getElementById(`${filterId}-type`);
+      const newType = select.value;
+
+      window.filterData[filterId].type = newType;
+
+      // Reset value based on type
+      switch (newType) {
+        case FILTER_TYPES.BOOLEAN:
+          window.filterData[filterId].value = true;
+          break;
+        case FILTER_TYPES.AND:
+        case FILTER_TYPES.OR:
+        case FILTER_TYPES.NOT:
+          window.filterData[filterId].operator = newType;
+          window.filterData[filterId].filters = [];
+          break;
+        case FILTER_TYPES.HAS_GQL:
+          window.filterData[filterId].expression = '';
+          break;
+        case FILTER_TYPES.HAS_TYPE:
+          window.filterData[filterId].types = [];
+          break;
+        case FILTER_TYPES.COMPARISON:
+          window.filterData[filterId].expression = '';
+          window.filterData[filterId].operator = 'equals';
+          window.filterData[filterId].compareValue = '';
+          break;
+      }
+
+      renderFilterContent(filterId);
+      updateOutput();
+    }
+
+    // Render filter content based on type
+    function renderFilterContent(filterId) {
+      const data = window.filterData[filterId];
+      const content = document.getElementById(`${filterId}-content`);
+      if (!content) return;
+
+      switch (data.type) {
+        case FILTER_TYPES.BOOLEAN:
+          content.innerHTML = `
+            <div class="boolean-filter">
+              <button class="${data.value === true ? 'active' : ''}" onclick="setBooleanValue('${filterId}', true)">True</button>
+              <button class="${data.value === false ? 'active' : ''}" onclick="setBooleanValue('${filterId}', false)">False</button>
+            </div>
+          `;
+          break;
+
+        case FILTER_TYPES.AND:
+        case FILTER_TYPES.OR:
+        case FILTER_TYPES.NOT:
+          renderLogicalFilter(filterId, content);
+          break;
+
+        case FILTER_TYPES.HAS_GQL:
+          content.innerHTML = `
+            <div class="input-group">
+              <label>GQL Expression</label>
+              <input type="text" id="${filterId}-gql" placeholder="e.g. present_value" value="${data.expression || ''}" oninput="updateGQLExpression('${filterId}')">
+              <div class="hint">A GQL expression that must successfully evaluate to a non-null value or node</div>
+            </div>
+          `;
+          break;
+
+        case FILTER_TYPES.HAS_TYPE:
+          renderHasTypeFilter(filterId, content);
+          break;
+
+        case FILTER_TYPES.COMPARISON:
+          renderComparisonFilter(filterId, content);
+          break;
+      }
+    }
+
+    // Boolean filter
+    function setBooleanValue(filterId, value) {
+      window.filterData[filterId].value = value;
+      renderFilterContent(filterId);
+      updateOutput();
+    }
+
+    // Logical filter
+    function renderLogicalFilter(filterId, content) {
+      const data = window.filterData[filterId];
+      // Operator is now determined by the filter type itself
+      if (!data.operator) data.operator = data.type;
+      if (!data.filters) data.filters = [];
+
+      const operatorHint = data.operator === 'not' ? 'NOT requires exactly one filter' : (data.operator === 'and' ? 'AND requires at least two filters' : 'OR requires at least two filters');
+      const operatorLabel = `
+        <div class="hint" style="margin-bottom: 12px;">${operatorHint}</div>
+      `;
+
+      const filtersHtml = data.filters.map((nestedFilterId, index) => {
+        const filterContainerId = `${filterId}-filter-${index}`;
+        return `
+          <div class="logical-filter-item">
+            <div class="logical-filter-header">
+              <span class="logical-filter-label">Filter ${index + 1}</span>
+              <button class="remove-btn" onclick="removeLogicalFilter('${filterId}', ${index})">Remove</button>
+            </div>
+            <div id="${filterContainerId}"></div>
+          </div>
+        `;
+      }).join('');
+
+      const canAddMore = data.operator === 'not' ? data.filters.length < 1 : true;
+
+      content.innerHTML = `
+        <div class="logical-filter">
+          ${operatorLabel}
+          ${filtersHtml}
+          ${canAddMore ? `<button class="add-btn" onclick="addLogicalFilter('${filterId}')">+ Add Filter</button>` : ''}
+        </div>
+      `;
+
+      // Render nested filters - reuse existing filterIds
+      data.filters.forEach((nestedFilterId, index) => {
+        const filterContainerId = `${filterId}-filter-${index}`;
+        renderExistingFilter(filterContainerId, nestedFilterId);
+      });
+      updateOutput();
+    }
+
+    function addLogicalFilter(filterId) {
+      const data = window.filterData[filterId];
+      const index = data.filters.length;
+      const filterContainerId = `${filterId}-filter-${index}`;
+      const newFilterId = `filter-${filterCounter++}`;
+
+      // Store the new filterId in the parent's filters array
+      data.filters.push(newFilterId);
+
+      // Create the filter data
+      window.filterData[newFilterId] = {
+        type: FILTER_TYPES.BOOLEAN,
+        value: true,
+        containerId: filterContainerId,
+        parentData: { parentId: filterId, index: index }
+      };
+
+      renderFilterContent(filterId);
+      updateOutput();
+    }
+
+    function removeLogicalFilter(filterId, index) {
+      const data = window.filterData[filterId];
+      const removedFilterId = data.filters[index];
+
+      // Recursively clean up nested filter data
+      function cleanupFilter(fid) {
+        const fdata = window.filterData[fid];
+        if (fdata && (fdata.type === FILTER_TYPES.AND || fdata.type === FILTER_TYPES.OR || fdata.type === FILTER_TYPES.NOT) && fdata.filters) {
+          fdata.filters.forEach(nestedId => cleanupFilter(nestedId));
+        }
+        delete window.filterData[fid];
+      }
+
+      cleanupFilter(removedFilterId);
+      data.filters.splice(index, 1);
+
+      // Update indices of remaining filters
+      data.filters.forEach((fid, i) => {
+        if (window.filterData[fid] && window.filterData[fid].parentData) {
+          window.filterData[fid].parentData.index = i;
+        }
+      });
+
+      renderFilterContent(filterId);
+      updateOutput();
+    }
+
+    // Has GQL Expression
+    function updateGQLExpression(filterId) {
+      const input = document.getElementById(`${filterId}-gql`);
+      window.filterData[filterId].expression = input.value;
+      updateOutput();
+    }
+
+    // Has Type filter
+    function renderHasTypeFilter(filterId, content) {
+      const data = window.filterData[filterId];
+      if (!data.types) data.types = [];
+
+      const tagsHtml = data.types.length > 0 ? `
+        <div class="type-list">
+          ${data.types.map((type, index) => `
+            <div class="type-tag">
+              <span>${type}</span>
+              <span class="type-tag-remove" onclick="removeType('${filterId}', ${index})">x</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '';
+
+      content.innerHTML = `
+        <div class="input-group">
+          <label>Node Types</label>
+          ${tagsHtml}
+          <div class="type-input-row">
+            <input type="text" id="${filterId}-type-input" placeholder="Type name or numeric ID (e.g. AREA or 9)" onkeydown="if(event.key==='Enter'){event.preventDefault();addType('${filterId}');}">
+            <button onclick="addType('${filterId}')">Add</button>
+          </div>
+          <div class="hint">Add one or more node types (string names or numeric IDs)</div>
+        </div>
+      `;
+    }
+
+    function addType(filterId) {
+      const input = document.getElementById(`${filterId}-type-input`);
+      const value = input.value.trim();
+      if (!value) return;
+
+      const data = window.filterData[filterId];
+
+      // Try to parse as number
+      const numValue = parseInt(value, 10);
+      const finalValue = isNaN(numValue) ? value : numValue;
+
+      if (!data.types.includes(finalValue)) {
+        data.types.push(finalValue);
+        input.value = '';
+        renderFilterContent(filterId);
+        updateOutput();
+
+        // Refocus the input field so user can continue typing
+        setTimeout(() => {
+          const newInput = document.getElementById(`${filterId}-type-input`);
+          if (newInput) newInput.focus();
+        }, 0);
+      }
+    }
+
+    function removeType(filterId, index) {
+      const data = window.filterData[filterId];
+      data.types.splice(index, 1);
+      renderFilterContent(filterId);
+      updateOutput();
+    }
+
+    // Comparison filter
+    function renderComparisonFilter(filterId, content) {
+      const data = window.filterData[filterId];
+      if (!data.operator) data.operator = 'equals';
+      if (data.expression === undefined) data.expression = '';
+      if (data.compareValue === undefined) data.compareValue = '';
+
+      const operatorOptions = COMPARISON_OPS.map(op => {
+        let label = op;
+        switch (op) {
+          case 'greaterThan': label = 'Greater Than (>)'; break;
+          case 'lessThan': label = 'Less Than (<)'; break;
+          case 'greaterThanOrEqual': label = 'Greater Than or Equal (≥)'; break;
+          case 'lessThanOrEqual': label = 'Less Than or Equal (≤)'; break;
+          case 'equals': label = 'Equals (=)'; break;
+          case 'regex': label = 'Regex Match'; break;
+        }
+        return `<option value="${op}" ${data.operator === op ? 'selected' : ''}>${label}</option>`;
+      }).join('');
+
+      const isNumeric = ['greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual'].includes(data.operator);
+      const isRegex = data.operator === 'regex';
+
+      let valueInputType = 'text';
+      let valueHint = 'String, number, or boolean value';
+
+      if (isNumeric) {
+        valueInputType = 'number';
+        valueHint = 'Numeric value for comparison';
+      } else if (isRegex) {
+        valueHint = 'Regular expression pattern (<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/regex/Pattern.html" target="_blank" style="color:#4fc3f7;text-decoration:underline;">Java regex syntax</a>)';
+      }
+
+      content.innerHTML = `
+        <div class="input-group">
+          <label>GQL Expression to Evaluate</label>
+          <input type="text" id="${filterId}-expr" placeholder="e.g. present_value.value" value="${data.expression || ''}" oninput="updateComparisonExpression('${filterId}')">
+          <div class="hint">The GQL expression to evaluate and compare</div>
+        </div>
+        <div class="comparison-operator">
+          <select id="${filterId}-comp-op" onchange="updateComparisonOperator('${filterId}')">
+            ${operatorOptions}
+          </select>
+          <input type="${valueInputType}" id="${filterId}-comp-value" placeholder="${isRegex ? '^pattern$' : 'value'}" value="${data.compareValue || ''}" oninput="updateComparisonValue('${filterId}')" step="any">
+        </div>
+        <div class="hint">${valueHint}</div>
+      `;
+    }
+
+    function updateComparisonExpression(filterId) {
+      const input = document.getElementById(`${filterId}-expr`);
+      window.filterData[filterId].expression = input.value;
+      updateOutput();
+    }
+
+    function updateComparisonOperator(filterId) {
+      const select = document.getElementById(`${filterId}-comp-op`);
+      window.filterData[filterId].operator = select.value;
+      renderFilterContent(filterId);
+      updateOutput();
+    }
+
+    function updateComparisonValue(filterId) {
+      const input = document.getElementById(`${filterId}-comp-value`);
+      const data = window.filterData[filterId];
+
+      // Handle numeric operators
+      if (['greaterThan', 'lessThan', 'greaterThanOrEqual', 'lessThanOrEqual'].includes(data.operator)) {
+        const num = parseFloat(input.value);
+        data.compareValue = isNaN(num) ? '' : num;
+      } else {
+        // For equals, try to parse as number or boolean
+        let value = input.value;
+        if (data.operator === 'equals') {
+          if (value === 'true') value = true;
+          else if (value === 'false') value = false;
+          else {
+            const num = parseFloat(value);
+            if (!isNaN(num) && value === num.toString()) {
+              value = num;
+            }
+          }
+        }
+        data.compareValue = value;
+      }
+
+      updateOutput();
+    }
+
+    // Build JSON from filter data
+    function buildFilterJSON(filterId) {
+      const data = window.filterData[filterId];
+      if (!data) return null;
+
+      switch (data.type) {
+        case FILTER_TYPES.BOOLEAN:
+          return data.value;
+
+        case FILTER_TYPES.AND:
+        case FILTER_TYPES.OR:
+        case FILTER_TYPES.NOT:
+          // Always generate output, even if empty or incomplete
+          if (!data.filters || data.filters.length === 0) {
+            return { [data.operator]: [] };
+          }
+
+          const operator = data.operator;
+          const nestedFilters = data.filters.map(nestedFilterId => {
+            return buildFilterJSON(nestedFilterId);
+          }).filter(f => f !== null);
+
+          if (operator === 'not') {
+            return nestedFilters.length > 0 ? { not: nestedFilters[0] } : { not: false };
+          } else {
+            return { [operator]: nestedFilters };
+          }
+
+        case FILTER_TYPES.HAS_GQL:
+          // Always generate output, even if empty
+          return { hasGQL: data.expression || '' };
+
+        case FILTER_TYPES.HAS_TYPE:
+          // Always generate output, even if empty
+          return { hasType: data.types && data.types.length > 0 ? data.types : [] };
+
+        case FILTER_TYPES.COMPARISON:
+          // Always generate output, even if incomplete
+          const result = { expression: data.expression || '' };
+          // Include the comparison value even if empty
+          result[data.operator] = data.compareValue !== undefined ? data.compareValue : '';
+          return result;
+
+        default:
+          return null;
+      }
+    }
+
+    // Validate filter against schema
+    function validateFilter(filterId) {
+      const data = window.filterData[filterId];
+      if (!data) return [];
+
+      const warnings = [];
+
+      switch (data.type) {
+        case FILTER_TYPES.AND:
+        case FILTER_TYPES.OR:
+          if (!data.filters || data.filters.length < 2) {
+            warnings.push(`${data.operator.toUpperCase()} operator requires at least 2 filters (currently has ${data.filters ? data.filters.length : 0})`);
+          }
+          if (data.filters) {
+            data.filters.forEach(fid => {
+              warnings.push(...validateFilter(fid));
+            });
+          }
+          break;
+
+        case FILTER_TYPES.NOT:
+          if (!data.filters || data.filters.length !== 1) {
+            warnings.push(`NOT operator requires exactly 1 filter (currently has ${data.filters ? data.filters.length : 0})`);
+          }
+          if (data.filters && data.filters.length > 0) {
+            warnings.push(...validateFilter(data.filters[0]));
+          }
+          break;
+
+        case FILTER_TYPES.HAS_GQL:
+          if (!data.expression || data.expression.trim() === '') {
+            warnings.push('Has GQL expression requires a non-empty expression');
+          }
+          break;
+
+        case FILTER_TYPES.HAS_TYPE:
+          if (!data.types || data.types.length === 0) {
+            warnings.push('Has type requires at least one type');
+          }
+          break;
+
+        case FILTER_TYPES.COMPARISON:
+          if (!data.expression || data.expression.trim() === '') {
+            warnings.push('Expression comparison requires a non-empty GQL expression');
+          }
+          // Allow empty values for equals, but warn for other operators
+          if (data.operator !== 'equals' && (data.compareValue === '' || data.compareValue === undefined)) {
+            warnings.push(`Expression comparison requires a non-empty value for ${data.operator}`);
+          }
+          break;
+      }
+
+      return warnings;
+    }
+
+    // Update output display
+    function updateOutput() {
+      const rootFilterId = Object.keys(window.filterData).find(id =>
+        window.filterData[id].containerId === 'root-filter'
+      );
+
+      const json = rootFilterId ? buildFilterJSON(rootFilterId) : null;
+      const output = document.getElementById('output');
+      const warningDiv = document.getElementById('validation-warning');
+      const warningMsg = document.getElementById('validation-message');
+
+      if (json === null) {
+        output.textContent = '// Build a filter to see the generated JSON';
+        output.style.color = '#666';
+        output.removeAttribute('data-highlighted');
+        warningDiv.style.display = 'none';
+      } else {
+        const jsonStr = JSON.stringify(json, null, 2);
+        output.textContent = jsonStr;
+        output.style.color = '';
+        // Delete the highlighted attribute before highlighting to avoid console warning
+        delete output.dataset.highlighted;
+        window.hljs.highlightElement(output);
+
+        // Check for validation warnings
+        const warnings = validateFilter(rootFilterId);
+        if (warnings.length > 0) {
+          warningMsg.innerHTML = warnings.map(w => `• ${w}`).join('<br>');
+          warningDiv.style.display = 'block';
+        } else {
+          warningDiv.style.display = 'none';
+        }
+
+        // Notify parent window if this is in an iframe
+        if (window.parent !== window) {
+          try {
+            window.parent.postMessage({
+              type: 'FILTER_UPDATED',
+              filter: jsonStr
+            }, '*');
+          } catch (e) {
+            // Ignore cross-origin errors
+          }
+        }
+      }
+    }
+
+    // Copy output to clipboard
+    document.getElementById('copy-output').addEventListener('click', function () {
+      const output = document.getElementById('output');
+      const text = output.textContent;
+
+      if (text.startsWith('//')) return;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = this;
+        const originalText = btn.textContent;
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    });
+
+    // Reset filter
+    document.getElementById('reset-btn').addEventListener('click', function () {
+      window.filterData = {};
+      filterCounter = 0;
+      init();
+    });
+
+    // Load filter from JSON
+    function loadFilterFromJSON(json, containerId, parentData) {
+      if (json === null || json === undefined) return null;
+
+      const filterId = `filter-${filterCounter++}`;
+
+      // Determine filter type from JSON structure
+      let filterType, filterData;
+
+      if (typeof json === 'boolean') {
+        // Boolean filter
+        filterType = FILTER_TYPES.BOOLEAN;
+        filterData = {
+          type: filterType,
+          value: json,
+          containerId: containerId,
+          parentData: parentData
+        };
+      } else if (typeof json === 'object') {
+        const keys = Object.keys(json);
+
+        if (keys.includes('and')) {
+          // AND filter
+          filterType = FILTER_TYPES.AND;
+          filterData = {
+            type: filterType,
+            operator: 'and',
+            filters: [],
+            containerId: containerId,
+            parentData: parentData
+          };
+        } else if (keys.includes('or')) {
+          // OR filter
+          filterType = FILTER_TYPES.OR;
+          filterData = {
+            type: filterType,
+            operator: 'or',
+            filters: [],
+            containerId: containerId,
+            parentData: parentData
+          };
+        } else if (keys.includes('not')) {
+          // NOT filter
+          filterType = FILTER_TYPES.NOT;
+          filterData = {
+            type: filterType,
+            operator: 'not',
+            filters: [],
+            containerId: containerId,
+            parentData: parentData
+          };
+        } else if (keys.includes('hasGQL')) {
+          // Has GQL filter
+          filterType = FILTER_TYPES.HAS_GQL;
+          filterData = {
+            type: filterType,
+            expression: json.hasGQL || '',
+            containerId: containerId,
+            parentData: parentData
+          };
+        } else if (keys.includes('hasType')) {
+          // Has Type filter
+          filterType = FILTER_TYPES.HAS_TYPE;
+          filterData = {
+            type: filterType,
+            types: Array.isArray(json.hasType) ? json.hasType : [],
+            containerId: containerId,
+            parentData: parentData
+          };
+        } else if (keys.includes('expression')) {
+          // Comparison filter
+          filterType = FILTER_TYPES.COMPARISON;
+          const operator = keys.find(k => k !== 'expression') || 'equals';
+          filterData = {
+            type: filterType,
+            expression: json.expression || '',
+            operator: operator,
+            compareValue: json[operator] !== undefined ? json[operator] : '',
+            containerId: containerId,
+            parentData: parentData
+          };
+        } else {
+          throw new Error('Unknown filter structure: ' + JSON.stringify(json));
+        }
+      } else {
+        throw new Error('Invalid filter type: ' + typeof json);
+      }
+
+      // Store filter data
+      window.filterData[filterId] = filterData;
+
+      // Handle nested filters for logical operators
+      if (filterType === FILTER_TYPES.AND || filterType === FILTER_TYPES.OR || filterType === FILTER_TYPES.NOT) {
+        const nestedArray = json[filterData.operator];
+        if (Array.isArray(nestedArray)) {
+          nestedArray.forEach((nestedJson, index) => {
+            const nestedContainerId = `${filterId}-filter-${index}`;
+            const nestedFilterId = loadFilterFromJSON(nestedJson, nestedContainerId, { parentId: filterId, index: index });
+            if (nestedFilterId) {
+              filterData.filters.push(nestedFilterId);
+            }
+          });
+        } else if (filterType === FILTER_TYPES.NOT && nestedArray !== null && nestedArray !== undefined) {
+          // Handle single filter for NOT
+          const nestedContainerId = `${filterId}-filter-0`;
+          const nestedFilterId = loadFilterFromJSON(nestedArray, nestedContainerId, { parentId: filterId, index: 0 });
+          if (nestedFilterId) {
+            filterData.filters.push(nestedFilterId);
+          }
+        }
+      }
+
+      return filterId;
+    }
+
+    // Load JSON button handler
+    document.getElementById('load-json-btn').addEventListener('click', function () {
+      const input = document.getElementById('json-input');
+      const errorDiv = document.getElementById('load-error');
+      const errorMsg = document.getElementById('load-error-message');
+
+      try {
+        const jsonText = input.value.trim();
+        if (!jsonText) {
+          throw new Error('Please paste JSON to load');
+        }
+
+        // Parse JSON
+        const json = JSON.parse(jsonText);
+
+        // Reset filter data
+        window.filterData = {};
+        filterCounter = 0;
+
+        // Load the filter structure
+        const rootFilterId = loadFilterFromJSON(json, 'root-filter', null);
+
+        if (rootFilterId) {
+          // Render the loaded filter
+          renderExistingFilter('root-filter', rootFilterId);
+          updateOutput();
+
+          // Clear input and hide error
+          input.value = '';
+          autoResizeTextarea();
+          errorDiv.style.display = 'none';
+
+          // Show success feedback
+          const btn = this;
+          const originalText = btn.textContent;
+          btn.textContent = 'Loaded!';
+          btn.style.background = '#66bb6a';
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+          }, 2000);
+        } else {
+          throw new Error('Failed to load filter structure');
+        }
+      } catch (e) {
+        errorMsg.textContent = e.message;
+        errorDiv.style.display = 'block';
+      }
+    });
+
+    // Auto-resize textarea to fit content
+    const jsonInput = document.getElementById('json-input');
+    const minHeight = 42; // Minimum height in pixels (1 line + padding)
+    function autoResizeTextarea() {
+      jsonInput.style.height = minHeight + 'px';
+      if (jsonInput.scrollHeight > minHeight) {
+        jsonInput.style.height = jsonInput.scrollHeight + 'px';
+      }
+    }
+    jsonInput.addEventListener('input', autoResizeTextarea);
+    jsonInput.addEventListener('paste', function () {
+      setTimeout(autoResizeTextarea, 0);
+    });
+    // Initial resize
+    autoResizeTextarea();
+
+    // Listen for messages from parent window (when used in iframe)
+    window.addEventListener('message', function (event) {
+      if (event.data && event.data.type === 'SET_DEFAULT') {
+        // Store the default filter value for Reset button
+        parentDefaultFilter = event.data.defaultFilter;
+      } else if (event.data && event.data.type === 'LOAD_FILTER') {
+        try {
+          const filterJSON = event.data.filter;
+          // Use the existing load functionality
+          const input = document.getElementById('json-input');
+          const errorDiv = document.getElementById('load-error');
+          const errorMsg = document.getElementById('load-error-message');
+
+          const json = JSON.parse(filterJSON);
+
+          // Reset filter data
+          window.filterData = {};
+          filterCounter = 0;
+
+          // Load the filter
+          const rootFilterId = loadFilterFromJSON(json, 'root-filter', null);
+
+          if (rootFilterId) {
+            renderExistingFilter('root-filter', rootFilterId);
+            updateOutput();
+            
+            // Clear the input and hide error
+            input.value = '';
+            autoResizeTextarea();
+            errorDiv.style.display = 'none';
+          } else {
+            throw new Error('Failed to load filter structure');
+          }
+        } catch (e) {
+          console.error('Failed to load filter from parent:', e);
+        }
+      }
+    });
+
+    // Detect if running standalone (not in iframe)
+    if (window.self === window.top) {
+      // Standalone mode - show header and load section, hide info banner
+      const header = document.querySelector('.header');
+      const infoBanner = document.getElementById('iframe-info');
+      const loadSection = document.getElementById('load-json-section');
+      if (header) header.style.display = 'block';
+      if (infoBanner) infoBanner.style.display = 'none';
+      if (loadSection) loadSection.style.display = 'block';
+    } else {
+      // Iframe mode - hide load section
+      const loadSection = document.getElementById('load-json-section');
+      if (loadSection) loadSection.style.display = 'none';
+    }
+
+    // Initialize on page load
+    init();
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,178 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SearchGQL",
+  "description": "Find nodes in the system.",
+  "type": "object",
+  "properties": {
+    "roots": {
+      "type": "array",
+      "description": "A list of GQL paths or DBIDs to use as the starting point for the search. If omitted or empty, the search will start from the root of the geo tree.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "description": "A GQL path.",
+            "minLength": 1
+          },
+          {
+            "type": "integer",
+            "description": "A DBID."
+          }
+        ]
+      },
+      "uniqueItems": true
+    },
+    "fieldAccess": {
+      "type": "boolean",
+      "description": "If true, information may be retrieved from devices in the field. It is suggested to leave this false unless you need it.",
+      "default": false
+    },
+    "steps": {
+      "type": "array",
+      "description": "A list of steps to apply in order. Each step filters the set of nodes returned by the previous step.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "properties": {
+          "includeRoots": {
+            "type": "boolean",
+            "description": "If true, the nodes passed to this step are checked by `intermediateFilter` when starting the depth-first search. If false, only their descendants are checked.",
+            "default": false
+          },
+          "intermediateFilter": {
+            "$ref": "#/definitions/filter",
+            "description": "From the set of nodes passed to this step, descendants are iterated in a depth-first search. Every node encountered is tested against this filter. If it matches, its children are also searched. If it does not match, it is checked against `leafFilter`. Nodes matching the `leafFilter` are then used as the starting point in the next step.",
+            "default": false
+          },
+          "leafFilter": {
+            "$ref": "#/definitions/filter",
+            "default": true
+          },
+          "jump": {
+            "type": "string",
+            "minLength": 1,
+            "description": "An optional jump expression applied to nodes matching `leafFilter` before passing them to the next step. This GQL expression should resolve to another node."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "GQL paths in the `roots` property will be resolved relative to this node. If omitted, paths will be resolved relative to the root of the geo tree."
+    }
+  },
+  "required": [
+    "steps"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "filter": {
+      "anyOf": [
+        {
+          "type": "boolean",
+          "description": "If true, all nodes match. If false, no nodes match."
+        },
+        {
+          "type": "object",
+          "properties": {
+            "and": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/filter"
+              },
+              "minItems": 2
+            },
+            "or": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/filter"
+              },
+              "minItems": 2
+            },
+            "not": {
+              "$ref": "#/definitions/filter"
+            },
+            "hasGQL": {
+              "type": "string",
+              "minLength": 1,
+              "description": "A GQL expression that must successfully evaluate to a non-null value or node to be considered a successful match."
+            },
+            "hasType": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                ]
+              },
+              "minItems": 1,
+              "description": "A list of node types where at least one must match to be successful.",
+              "uniqueItems": true
+            }
+          },
+          "minProperties": 1,
+          "maxProperties": 1,
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "expression": {
+              "type": "string",
+              "minLength": 1,
+              "description": "A GQL expression to evaluate and match against."
+            },
+            "equals": {
+              "description": "The value the evaluated expression must equal.",
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "regex": {
+              "type": "string",
+              "minLength": 1,
+              "description": "A regular expression the evaluated expression must match. If you want to force the whole string to match as opposed to merely a substring, be sure to use ^ and $ for anchors. Refer to https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/regex/Pattern.html"
+            },
+            "greaterThan": {
+              "type": "number",
+              "description": "The expressions's value must be greater than this."
+            },
+            "lessThan": {
+              "type": "number",
+              "description": "The expressions's value must be less than this."
+            },
+            "greaterThanOrEqual": {
+              "type": "number",
+              "description": "The expressions's value must be greater than or equal to this."
+            },
+            "lessThanOrEqual": {
+              "type": "number",
+              "description": "The expressions's value must be less than or equal to this."
+            }
+          },
+          "required": [
+            "expression"
+          ],
+          "additionalProperties": false,
+          "minProperties": 2,
+          "maxProperties": 2
+        }
+      ]
+    }
+  }
+}

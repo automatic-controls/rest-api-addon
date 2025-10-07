@@ -662,6 +662,23 @@ form {
   font-size: 16px;
 }
 
+.view-request-button {
+  display: none;
+  background: var(--info);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.response-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .api-code-response {
   padding: 4px 6px;
   overflow-x: auto;
@@ -688,4 +705,120 @@ pre>code::-webkit-scrollbar-thumb {
 .sidebar::-webkit-scrollbar-track,
 pre>code::-webkit-scrollbar-track {
   background: var(--code-bg);
+}
+
+.filter-builder-modal {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  animation: fadeIn2 0.2s ease-out;
+}
+
+.filter-builder-modal.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.filter-builder-container {
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  height: 85%;
+  max-width: 1400px;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease-out;
+}
+
+.filter-builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  border-radius: 8px 8px 0 0;
+}
+
+.filter-builder-header h3 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 18px;
+}
+
+.filter-builder-close {
+  background: var(--error);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.filter-builder-close:hover {
+  opacity: 0.85;
+}
+
+.filter-builder-iframe {
+  flex: 1;
+  border: none;
+  width: 100%;
+  background: #1e1e1e;
+}
+
+@keyframes fadeIn2 {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.filter-builder-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: opacity 0.2s;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.filter-builder-btn:hover {
+  opacity: 0.85;
+}
+
+.filter-builder-btn i {
+  font-size: 12px;
 }

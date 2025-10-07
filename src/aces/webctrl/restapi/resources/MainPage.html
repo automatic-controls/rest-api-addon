@@ -153,20 +153,28 @@
       `;
       permissionsContainer.appendChild(adminDiv);
 
-      // Add endpoint checkboxes
+      // Responsive grid for endpoint checkboxes
+      const gridDiv = document.createElement('div');
+      gridDiv.className = 'permissions-grid';
+
       endpoints.forEach((endpoint, index) => {
         const permissionItem = document.createElement('div');
         permissionItem.className = 'permission-item';
+        permissionItem.style.display = 'flex';
+        permissionItem.style.alignItems = 'center';
+        permissionItem.style.padding = '3px 0';
         permissionItem.innerHTML = `
           <input type="checkbox" id="perm-${index}" data-index="${index}">
-          <label for="perm-${index}">${endpoint}</label>
+          <label for="perm-${index}" style="font-weight:500;">${endpoint}</label>
         `;
-        permissionsContainer.appendChild(permissionItem);
+        gridDiv.appendChild(permissionItem);
       });
+
+      permissionsContainer.appendChild(gridDiv);
 
       // Admin logic: check/uncheck all, disable/enable
       const adminCheckbox = document.getElementById('perm-admin');
-      const endpointCheckboxes = Array.from(permissionsContainer.querySelectorAll('input[type="checkbox"][id^="perm-"]:not(#perm-admin)'));
+      const endpointCheckboxes = Array.from(gridDiv.querySelectorAll('input[type="checkbox"]'));
       adminCheckbox.addEventListener('change', function () {
         if (adminCheckbox.checked) {
           endpointCheckboxes.forEach(cb => { cb.checked = true; cb.disabled = true; });

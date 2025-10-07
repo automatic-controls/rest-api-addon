@@ -14,7 +14,7 @@
   <script src="./lib/powershell.min.js"></script>
   <script>
     var devmode = false;
-    function toggleDevMode(){
+    function toggleDevMode() {
       devmode = !devmode;
       return devmode;
     }
@@ -43,14 +43,26 @@
       const apiResult = document.getElementById(endpoint + '-demo-result');
       const apiResultCode = document.getElementById(endpoint + '-demo-result-code');
       const loadingSpinner = document.getElementById(endpoint + '-loading');
+      const requestBtn = document.getElementById(endpoint + '-view-request-btn');
       apiForm.addEventListener('submit', async function (e) {
         e.preventDefault();
+        const data = getData();
+        if (data === null) {
+          return;
+        }
+
+        // Store the raw request data for viewing
+        if (requestBtn) {
+          requestBtn.dataset.requestData = typeof data === 'object' ? stringifyWithBigInts(data) : String(data);
+          requestBtn.style.display = 'inline-block';
+        }
+        
         apiResult.style.display = 'none';
         apiResultCode.innerHTML = '';
         loadingSpinner.style.display = 'inline-block';
         try {
-          const client = new WebCTRLAPIClient(null,null,null,false);
-          const result = await client.sendRequest(endpoint, getData());
+          const client = new WebCTRLAPIClient(null, null, null, false);
+          const result = await client.sendRequest(endpoint, data);
           apiResultCode.innerHTML = typeof result === 'object' ? stringifyWithBigInts(result) : String(result);
           apiResult.style.display = 'block';
           if (window.hljs) {
@@ -66,6 +78,66 @@
           loadingSpinner.style.display = 'none';
         }
       });
+    }
+    
+    function viewRequestData(endpoint) {
+      const requestBtn = document.getElementById(endpoint + '-view-request-btn');
+      if (!requestBtn || !requestBtn.dataset.requestData) return;
+      
+      const requestData = requestBtn.dataset.requestData;
+      const modal = document.createElement('div');
+      modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+      modal.innerHTML = `
+        <div style="background:var(--card-bg);border-radius:8px;max-width:800px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+          <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;color:var(--text-primary);"><i class="fas fa-paper-plane" style="color:var(--info);margin-right:8px;"></i>Request Data</h3>
+            <button id="request-modal-close" style="background:none;border:none;font-size:24px;color:var(--text-secondary);cursor:pointer;padding:0;width:30px;height:30px;" title="Close">&times;</button>
+          </div>
+          <div style="padding:20px;overflow:auto;flex:1;">
+            <pre style="margin:0;position:relative;"><code class="language-json" style="white-space:pre-wrap;word-break:break-word;">${requestData.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>
+          </div>
+          <div style="padding:15px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;">
+            <button id="request-modal-copy" style="background:var(--primary);color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px;"><i class="fas fa-copy"></i> Copy</button>
+            <button id="request-modal-close-bottom" style="background:var(--border);color:var(--text-primary);border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-size:14px;">Close</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Add event listeners
+      const closeBtn = modal.querySelector('#request-modal-close');
+      const closeBottomBtn = modal.querySelector('#request-modal-close-bottom');
+      const copyBtn = modal.querySelector('#request-modal-copy');
+      
+      const closeModal = () => modal.remove();
+      
+      closeBtn.addEventListener('click', closeModal);
+      closeBottomBtn.addEventListener('click', closeModal);
+      
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(requestData);
+          copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          }, 1400);
+        } catch (err) {
+          copyBtn.innerHTML = '<i class="fas fa-times"></i> Error';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          }, 1400);
+        }
+      });
+      
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) closeModal();
+      });
+      
+      // Highlight the code
+      if (window.hljs) {
+        const code = modal.querySelector('code');
+        if (code) hljs.highlightElement(code);
+      }
     }
   </script>
 </head>
@@ -105,8 +177,20 @@
         <li class="nav-item" data-target="resolve-gql">
           <i class="fas fa-search"></i> <span class="nav-label">ResolveGQL</span>
         </li>
+        <li class="nav-item" data-target="search-gql">
+          <i class="fas fa-search-plus"></i> <span class="nav-label">SearchGQL</span>
+        </li>
+        <li class="nav-item" data-target="exec-gql">
+          <i class="fas fa-bolt"></i> <span class="nav-label">ExecGQL</span>
+        </li>
         <li class="nav-item" data-target="exec-command">
           <i class="fas fa-terminal"></i> <span class="nav-label">ExecCommand</span>
+        </li>
+        <li class="nav-item" data-target="create-operator">
+          <i class="fas fa-user-plus"></i> <span class="nav-label">CreateOperator</span>
+        </li>
+        <li class="nav-item" data-target="delete-operator">
+          <i class="fas fa-user-slash"></i> <span class="nav-label">DeleteOperator</span>
         </li>
       </ul>
       <li class="nav-item" data-target="get-schema">
@@ -139,16 +223,46 @@
           </div>
           <ul style="margin-left:10px;margin-bottom:0px;">
             <li style="margin-bottom:10px;">
-              <b><a href="#get-schema" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-file-alt" style="margin-right:6px;"></i>GetSchema</a></b><br>
-              <span style="color:var(--text-secondary);font-size:14px;">Retrieves the JSON schema used to validate input for an API endpoint.</span>
+              <b><a href="#get-schema" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-file-alt" style="margin-right:6px;"></i>GetSchema</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Retrieves the JSON schema used to validate input
+                for an API endpoint.</span>
             </li>
             <li style="margin-bottom:10px;">
-              <b><a href="#resolve-gql" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-search" style="margin-right:6px;"></i>ResolveGQL</a></b><br>
-              <span style="color:var(--text-secondary);font-size:14px;">Resolves a GQL path or DBID to retrieve details about the resolved node, including children and evaluated expressions.</span>
+              <b><a href="#resolve-gql" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-search"
+                    style="margin-right:6px;"></i>ResolveGQL</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Resolves a GQL path or DBID to retrieve details
+                about the resolved node, including children and evaluated expressions.</span>
             </li>
             <li style="margin-bottom:10px;">
-              <b><a href="#exec-command" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-terminal" style="margin-right:6px;"></i>ExecCommand</a></b><br>
-              <span style="color:var(--text-secondary);font-size:14px;">Executes manual commands on the server. Refer to WebCTRL's documentation for specific commands.</span>
+              <b><a href="#search-gql" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-search-plus" style="margin-right:6px;"></i>SearchGQL</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Find nodes in the system using an advanced
+                search.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#exec-gql" style="color:var(--primary);text-decoration:underline;"><i class="fas fa-bolt"
+                    style="margin-right:6px;"></i>ExecGQL</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Retrieve and/or set attribute values for
+                specified nodes using GQL expressions.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#exec-command" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-terminal" style="margin-right:6px;"></i>ExecCommand</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Executes manual commands on the server. Refer to
+                WebCTRL's documentation for specific commands.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#create-operator" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-user-plus" style="margin-right:6px;"></i>CreateOperator</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Create or update an operator account with roles
+                and password options.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#delete-operator" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-user-slash" style="margin-right:6px;"></i>DeleteOperator</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Delete one or more operators from the
+                system.</span>
             </li>
             <!-- Add future endpoints here -->
           </ul>
@@ -428,10 +542,12 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
             <div class="api-param-div">
               <label for="ResolveGQL-param-expression" class="api-param-name">expression <span
                   class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">If provided, evaluates this
-                expression against the resolved node(s) and includes the result in the response. Multiple expressions may be specified as a JSON array.</span>
+              <span class="api-param-desc">If provided, evaluates one or more expressions against the resolved node(s)
+                and includes the result in the response. Enter multiple expressions as a comma-delimited list. When
+                constructing this parameter manually, use a JSON
+                array.</span>
               <input type="text" id="ResolveGQL-param-expression" name="ResolveGQL-param-expression"
-                placeholder="Expression to evaluate">
+                placeholder="e.g, ~actions/0.value,.node-type">
             </div>
             <div class="api-param-div">
               <label for="ResolveGQL-param-listAttributes" class="api-param-name">listAttributes <span
@@ -459,7 +575,8 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
                   class="api-param-optional">(optional)</span></label>
               <span class="api-param-desc">A comma-separated list of node
                 types to include when returning children. If omitted, all child node types are included. Ignored if
-                <code>includeChildren</code> is <code>false</code>. When constructing this parameter manually, you should use a JSON array
+                <code>includeChildren</code> is <code>false</code>. When constructing this parameter manually, you
+                should use a JSON array
                 instead of a comma-delimited string.</span>
               <input type="text" id="ResolveGQL-param-childFilter" name="ResolveGQL-param-childFilter"
                 placeholder="e.g. AREA,BEQU,BNET">
@@ -493,7 +610,10 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
         </form>
       </div>
       <div id="ResolveGQL-demo-result" class="api-demo-result">
-        <div class="api-card-header"><i class="fas fa-reply" style="color:var(--warning);"></i> Response</div>
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="ResolveGQL-view-request-btn" onclick="viewRequestData('ResolveGQL')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="ResolveGQL-demo-result-code" class="language-json api-code-response"></code></pre>
       </div>
@@ -557,15 +677,22 @@ $client.sendRequest('ResolveGQL', @{
           let expressionVal = document.getElementById('ResolveGQL-param-expression').value?.trim();
           let expression;
           if (expressionVal) {
-            try {
-              const parsed = JSON.parse(expressionVal);
-              if (Array.isArray(parsed) && parsed.every(e => typeof e === 'string')) {
-                expression = parsed;
-              } else {
-                expression = expressionVal;
+            // If input looks like a JSON array, parse as JSON. Otherwise, treat as comma-delimited.
+            if (expressionVal.startsWith('[') && expressionVal.endsWith(']')) {
+              try {
+                const parsed = JSON.parse(expressionVal);
+                if (Array.isArray(parsed) && parsed.every(e => typeof e === 'string')) {
+                  expression = parsed;
+                } else {
+                  expression = [expressionVal];
+                }
+              } catch {
+                expression = [expressionVal];
               }
-            } catch {
-              expression = expressionVal;
+            } else if (expressionVal.includes(',')) {
+              expression = expressionVal.split(',').map(s => s.trim()).filter(Boolean);
+            } else {
+              expression = [expressionVal];
             }
           } else {
             expression = undefined;
@@ -583,6 +710,406 @@ $client.sendRequest('ResolveGQL', @{
           if (typeof childFilter !== 'undefined') req.childFilter = childFilter;
           return req;
         });
+      </script>
+    </div>
+
+    <!-- SearchGQL Section -->
+    <div id="search-gql" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-search-plus"></i> SearchGQL</h2>
+        <span class="method-badge">POST /RestAPI/api/SearchGQL</span>
+      </div>
+      <div class="api-desc">
+        This endpoint traverses the node tree starting from one or more root nodes, applying filters at each step to find matching nodes.
+        Each step processes input nodes from the previous step (or from <code>roots</code> if it's the first step):
+        <ul style="margin:8px 0 8px 20px;color:var(--text-primary);">
+          <li><b>includeRoots:</b> If true, the input nodes are tested against <code>intermediateFilter</code> (and potentially <code>leafFilter</code>). If false, only the children of input nodes are tested.</li>
+          <li><b>intermediateFilter:</b> Recursively applied during tree traversal. If a node matches, its children are explored in the next iteration. The step continues through multiple recursive iterations until only leaf nodes remain.</li>
+          <li><b>leafFilter:</b> Applied to leaf nodes (nodes with no children or nodes that didn't match <code>intermediateFilter</code>). Matching nodes are included in the final results.</li>
+        </ul>
+        <b>How a step works:</b> Starting with input nodes, if <code>includeRoots</code> is true, test them against <code>intermediateFilter</code>. 
+        For nodes matching <code>intermediateFilter</code>, recursively explore their children. This recursion continues until no more nodes match <code>intermediateFilter</code>.
+        Finally, apply <code>leafFilter</code> to all remaining leaf nodes to determine which are returned as results.
+        Use multiple steps to build complex hierarchical searches.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="SearchGQL-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="SearchGQL-param-roots" class="api-param-name">roots <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of GQL paths or DBIDs to use as the starting point for
+                the search. If omitted, the search will start from the root of the geo tree.</span>
+              <input type="text" id="SearchGQL-param-roots" name="roots" placeholder="e.g. #main_floor,1001,1002">
+            </div>
+            <div class="api-param-div">
+              <label for="SearchGQL-param-fieldAccess" class="api-param-name">fieldAccess <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, information may be retrieved from devices in the field. Default:
+                <code>false</code>.</span>
+              <input type="checkbox" id="SearchGQL-param-fieldAccess" name="fieldAccess">
+            </div>
+            <div class="api-param-div">
+              <label for="SearchGQL-param-contextDBID" class="api-param-name">contextDBID <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, GQL paths in the <code>roots</code> property will be resolved
+                relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
+              <input type="text" id="SearchGQL-param-contextDBID" name="contextDBID" inputmode="numeric"
+                placeholder="DBID (integer)" oninput="stripNonDigits(this)">
+            </div>
+            <div class="api-param-div">
+              <label class="api-param-name">steps <span class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">Define search steps. Each step filters nodes from the previous step.</span>
+              <div id="SearchGQL-steps-container" style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+              </div>
+              <button type="button" onclick="addSearchGQLStep()"
+                style="margin-top:10px;padding:8px 18px;background:var(--success);color:white;border:none;border-radius:4px;cursor:pointer;font-size:14px;font-weight:500;transition:opacity 0.2s;"
+                onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <i class="fas fa-plus"></i> Add Step
+              </button>
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="SearchGQL-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="SearchGQL-demo-result" class="api-demo-result">
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="SearchGQL-view-request-btn" onclick="viewRequestData('SearchGQL')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="SearchGQL-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+await client.sendRequest('SearchGQL', {
+  steps: [
+    {
+      intermediateFilter: { hasType: ["AREA"] },
+      leafFilter: {
+        and: [
+          { hasType: ["BEQU"] },
+          {
+            expression: ".definition",
+            equals: "/defs/equipment/vav_hw_rht"
+          }
+        ]
+      },
+      jump: "dat"
+    }
+  ]
+});</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('SearchGQL', @{ 
+  steps = @(
+    @{
+      intermediateFilter = @{ hasType = @('AREA') }
+      leafFilter = @{
+        and = @(
+          @{ hasType = @('BEQU') }
+          @{
+            expression = '.definition'
+            equals = '/defs/equipment/vav_hw_rht'
+          }
+        )
+      }
+      jump = 'dat'
+    }
+  )
+})</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        let searchGQLStepCounter = 0;
+
+        // Copy button helper functions for SearchGQL JSON blocks
+        function createCopyButtonForSearchGQL() {
+          const btn = document.createElement('button');
+          btn.className = 'copy-btn';
+          btn.type = 'button';
+          btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          return btn;
+        }
+
+        function addCopyButtonToSearchGQLCode(code) {
+          if (!code || !code.parentElement) return;
+          // Avoid double-adding
+          if (code.parentElement.querySelector('.copy-btn')) return;
+          const btn = createCopyButtonForSearchGQL();
+          code.parentElement.appendChild(btn);
+          btn.addEventListener('click', async (e) => {
+            // Prevent click from bubbling to parent pre element
+            e.stopPropagation();
+            const text = code.innerText;
+            try {
+              await navigator.clipboard.writeText(text);
+              btn.classList.add('copied');
+              btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+              setTimeout(() => {
+                btn.classList.remove('copied');
+                btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+              }, 1400);
+            } catch (e) {
+              btn.innerHTML = '<i class="fas fa-times"></i> Error';
+              setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-copy"></i> Copy';
+              }, 1400);
+            }
+          });
+        }
+
+        function addSearchGQLStep() {
+          const stepId = searchGQLStepCounter++;
+          const container = document.getElementById('SearchGQL-steps-container');
+          const stepDiv = document.createElement('div');
+          stepDiv.id = `SearchGQL-step-${stepId}`;
+          stepDiv.className = 'api-param-div';
+          stepDiv.style.cssText = 'border:1px solid var(--border);padding:14px;border-radius:6px;background:var(--card-bg);position:relative;';
+          stepDiv.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+              <span class="step-title" style="font-weight:600;color:var(--primary);font-size:15px;"></span>
+              <button type="button" onclick="removeSearchGQLStep(${stepId})" style="padding:5px 12px;background:var(--error);color:white;border:none;border-radius:4px;cursor:pointer;font-size:13px;transition:opacity 0.2s;" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                <i class="fas fa-trash"></i> Remove
+              </button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div class="api-param-div">
+                <label for="SearchGQL-step-${stepId}-includeRoots" class="api-param-name">includeRoots <span class="api-param-optional">(optional)</span></label>
+                <span class="api-param-desc">If true, the nodes passed to this step are checked by intermediateFilter when starting the depth-first search. If false, only their descendants are checked. Default: <code>false</code>.</span>
+                <input type="checkbox" id="SearchGQL-step-${stepId}-includeRoots">
+              </div>
+              <div class="api-param-div">
+                <label class="api-param-name" style="display:block;margin-bottom:6px;">intermediateFilter <span class="api-param-optional">(optional)</span></label>
+                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:8px;">
+                  <span class="api-param-desc" style="flex:1;">
+                    From the set of nodes passed to this step, descendants are iterated in a depth-first search. Every node encountered is tested against this filter. If it matches, its children are also searched. If it does not match, it is checked against leafFilter. Nodes matching the leafFilter are then used as the starting point in the next step.
+                  </span>
+                  <button type="button" class="filter-builder-btn" onclick="openFilterBuilder(${stepId}, 'intermediateFilter')" style="flex-shrink:0;">
+                    <i class="fas fa-tools"></i> Build Filter
+                  </button>
+                </div>
+                <div>
+                  <pre id="SearchGQL-step-${stepId}-intermediateFilter-pre" style="margin:0;background:var(--background);border:1px solid var(--border);border-radius:4px;padding:10px;cursor:text;"><code id="SearchGQL-step-${stepId}-intermediateFilter-display" class="language-json" style="font-size:12px;white-space:pre-wrap;word-break:break-word;">false</code></pre>
+                  <textarea id="SearchGQL-step-${stepId}-intermediateFilter" rows="1" placeholder="false" style="display:none;width:100%;font-family:monospace;font-size:12px;line-height:1.5;padding:10px;border:1px solid var(--border);border-radius:4px;resize:none;background:var(--background);color:var(--text-primary);overflow:hidden;box-sizing:border-box;" oninput="autoResizeSearchGQLTextarea(this); updateSearchGQLFilterDisplay(${stepId}, 'intermediateFilter')" onfocus="showSearchGQLTextarea(${stepId}, 'intermediateFilter')" onblur="hideSearchGQLTextarea(${stepId}, 'intermediateFilter')"></textarea>
+                </div>
+              </div>
+              <div class="api-param-div">
+                <label class="api-param-name" style="display:block;margin-bottom:6px;">leafFilter <span class="api-param-optional">(optional)</span></label>
+                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:8px;">
+                  <span class="api-param-desc" style="flex:1;">
+                    Nodes matching this filter are passed to the next step.
+                  </span>
+                  <button type="button" class="filter-builder-btn" onclick="openFilterBuilder(${stepId}, 'leafFilter')" style="flex-shrink:0;">
+                    <i class="fas fa-tools"></i> Build Filter
+                  </button>
+                </div>
+                <div>
+                  <pre id="SearchGQL-step-${stepId}-leafFilter-pre" style="margin:0;background:var(--background);border:1px solid var(--border);border-radius:4px;padding:10px;cursor:text;"><code id="SearchGQL-step-${stepId}-leafFilter-display" class="language-json" style="font-size:12px;white-space:pre-wrap;word-break:break-word;">true</code></pre>
+                  <textarea id="SearchGQL-step-${stepId}-leafFilter" rows="1" placeholder="true" style="display:none;width:100%;font-family:monospace;font-size:12px;line-height:1.5;padding:10px;border:1px solid var(--border);border-radius:4px;resize:none;background:var(--background);color:var(--text-primary);overflow:hidden;box-sizing:border-box;" oninput="autoResizeSearchGQLTextarea(this); updateSearchGQLFilterDisplay(${stepId}, 'leafFilter')" onfocus="showSearchGQLTextarea(${stepId}, 'leafFilter')" onblur="hideSearchGQLTextarea(${stepId}, 'leafFilter')"></textarea>
+                </div>
+              </div>
+              <div class="api-param-div">
+                <label for="SearchGQL-step-${stepId}-jump" class="api-param-name">jump <span class="api-param-optional">(optional)</span></label>
+                <span class="api-param-desc">An optional jump expression applied to nodes matching leafFilter before passing them to the next step. This GQL expression should resolve to another node.</span>
+                <input type="text" id="SearchGQL-step-${stepId}-jump" name="SearchGQL-step-${stepId}-jump" placeholder="e.g. ~parent">
+              </div>
+            </div>
+          `;
+          container.appendChild(stepDiv);
+
+          // Set up click handlers to show textarea
+          const intPre = document.getElementById(`SearchGQL-step-${stepId}-intermediateFilter-pre`);
+          const intTextarea = document.getElementById(`SearchGQL-step-${stepId}-intermediateFilter`);
+          intPre.addEventListener('click', (e) => {
+            // Don't focus if clicking the copy button
+            if (e.target.closest('.copy-btn')) return;
+            showSearchGQLTextarea(stepId, 'intermediateFilter');
+            intTextarea.focus();
+          });
+
+          const leafPre = document.getElementById(`SearchGQL-step-${stepId}-leafFilter-pre`);
+          const leafTextarea = document.getElementById(`SearchGQL-step-${stepId}-leafFilter`);
+          leafPre.addEventListener('click', (e) => {
+            // Don't focus if clicking the copy button
+            if (e.target.closest('.copy-btn')) return;
+            showSearchGQLTextarea(stepId, 'leafFilter');
+            leafTextarea.focus();
+          });
+
+          // Initialize display for filters
+          // Highlight for new steps added after initial load (stepId > 0 means not initial step)
+          const shouldHighlight = stepId > 0;
+          updateSearchGQLFilterDisplay(stepId, 'intermediateFilter', shouldHighlight);
+          updateSearchGQLFilterDisplay(stepId, 'leafFilter', shouldHighlight);
+
+          // Add copy buttons to the new JSON blocks
+          addCopyButtonToSearchGQLCode(document.getElementById(`SearchGQL-step-${stepId}-intermediateFilter-display`));
+          addCopyButtonToSearchGQLCode(document.getElementById(`SearchGQL-step-${stepId}-leafFilter-display`));
+
+          // Update step numbering
+          updateStepNumbers();
+        }
+
+        function updateSearchGQLFilterDisplay(stepId, filterType, shouldHighlight = true) {
+          const textarea = document.getElementById(`SearchGQL-step-${stepId}-${filterType}`);
+          const display = document.getElementById(`SearchGQL-step-${stepId}-${filterType}-display`);
+          if (!textarea || !display) return;
+
+          let value = textarea.value.trim();
+          if (!value) {
+            value = filterType === 'intermediateFilter' ? 'false' : 'true';
+          }
+
+          // Try to format as JSON if possible
+          try {
+            const parsed = value === 'true' || value === 'false' ? value : JSON.parse(value);
+            value = typeof parsed === 'object' ? JSON.stringify(parsed, null, 2) : String(parsed);
+          } catch {
+            // Keep original value if not valid JSON
+          }
+
+          display.textContent = value;
+          if (shouldHighlight && window.hljs) {
+            delete display.dataset.highlighted;
+            hljs.highlightElement(display);
+          }
+        }
+
+        function autoResizeSearchGQLTextarea(textarea) {
+          // Reset height to get accurate measurement
+          textarea.style.height = '0px';
+          // Set height to scrollHeight to fit content exactly
+          textarea.style.height = textarea.scrollHeight + 'px';
+        }
+
+        function showSearchGQLTextarea(stepId, filterType) {
+          const pre = document.getElementById(`SearchGQL-step-${stepId}-${filterType}-pre`);
+          const textarea = document.getElementById(`SearchGQL-step-${stepId}-${filterType}`);
+          if (pre && textarea) {
+            pre.style.display = 'none';
+            textarea.style.display = 'block';
+            // Auto-resize to fit content
+            autoResizeSearchGQLTextarea(textarea);
+          }
+        }
+
+        function hideSearchGQLTextarea(stepId, filterType) {
+          const pre = document.getElementById(`SearchGQL-step-${stepId}-${filterType}-pre`);
+          const textarea = document.getElementById(`SearchGQL-step-${stepId}-${filterType}`);
+          if (pre && textarea) {
+            textarea.style.display = 'none';
+            pre.style.display = 'block';
+            // Update and highlight when losing focus
+            updateSearchGQLFilterDisplay(stepId, filterType, true);
+          }
+        }
+
+        function updateStepNumbers() {
+          const container = document.getElementById('SearchGQL-steps-container');
+          const stepDivs = container.children;
+          for (let i = 0; i < stepDivs.length; i++) {
+            const title = stepDivs[i].querySelector('.step-title');
+            if (title) {
+              title.textContent = `Step ${i + 1}`;
+            }
+          }
+        }
+
+        function removeSearchGQLStep(stepId) {
+          const stepDiv = document.getElementById(`SearchGQL-step-${stepId}`);
+          if (stepDiv) {
+            stepDiv.remove();
+            updateStepNumbers();
+          }
+        }
+
+        function parseSearchGQLFilter(filterStr) {
+          if (!filterStr || filterStr.trim() === '') return undefined;
+          const trimmed = filterStr.trim();
+          if (trimmed === 'true') return true;
+          if (trimmed === 'false') return false;
+          try {
+            return JSON.parse(trimmed);
+          } catch {
+            return undefined;
+          }
+        }
+
+        registerEndpointDemo('SearchGQL', () => {
+          const rootsVal = document.getElementById('SearchGQL-param-roots').value.trim();
+          const fieldAccess = document.getElementById('SearchGQL-param-fieldAccess').checked;
+          const contextDBIDVal = document.getElementById('SearchGQL-param-contextDBID').value.trim();
+
+          let roots = rootsVal ? rootsVal.split(',').map(s => {
+            s = s.trim();
+            return (/^\d+$/.test(s) ? BigInt(s) : s);
+          }).filter(Boolean) : undefined;
+
+          const stepsContainer = document.getElementById('SearchGQL-steps-container');
+          const stepDivs = stepsContainer.children;
+          const steps = [];
+
+          for (let i = 0; i < stepDivs.length; i++) {
+            const stepDiv = stepDivs[i];
+            const stepId = stepDiv.id.match(/SearchGQL-step-(\d+)/)[1];
+
+            const includeRoots = document.getElementById(`SearchGQL-step-${stepId}-includeRoots`).checked;
+            const intermediateFilterStr = document.getElementById(`SearchGQL-step-${stepId}-intermediateFilter`).value;
+            const leafFilterStr = document.getElementById(`SearchGQL-step-${stepId}-leafFilter`).value;
+            const jump = document.getElementById(`SearchGQL-step-${stepId}-jump`).value.trim();
+
+            const step = {};
+            if (includeRoots) step.includeRoots = true;
+
+            const intermediateFilter = parseSearchGQLFilter(intermediateFilterStr);
+            if (intermediateFilter !== undefined) step.intermediateFilter = intermediateFilter;
+
+            const leafFilter = parseSearchGQLFilter(leafFilterStr);
+            if (leafFilter !== undefined) step.leafFilter = leafFilter;
+
+            if (jump) step.jump = jump;
+
+            steps.push(step);
+          }
+
+          if (steps.length === 0) {
+            alert('At least one step is required.');
+            return null;
+          }
+
+          let req = { steps };
+          if (roots) req.roots = roots;
+          if (fieldAccess) req.fieldAccess = true;
+          if (contextDBIDVal && /^\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          return req;
+        });
+
+        // Add initial step
+        if (document.getElementById('SearchGQL-steps-container').children.length === 0) {
+          addSearchGQLStep();
+        }
       </script>
     </div>
 
@@ -636,7 +1163,10 @@ $client.sendRequest('ResolveGQL', @{
         </form>
       </div>
       <div id="ExecCommand-demo-result" class="api-demo-result">
-        <div class="api-card-header"><i class="fas fa-reply" style="color:var(--warning);"></i> Response</div>
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="ExecCommand-view-request-btn" onclick="viewRequestData('ExecCommand')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="ExecCommand-demo-result-code" class="language-json api-code-response"></code></pre>
       </div>
@@ -702,8 +1232,10 @@ $client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })<
                 required>
             </div>
             <div class="api-param-div">
-              <label for="GetSchema-param-verbose" class="api-param-name">verbose <span class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">If true, the returned schema will include additional description fields. Default: <code>false</code>.</span>
+              <label for="GetSchema-param-verbose" class="api-param-name">verbose <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, the returned schema will include additional description fields.
+                Default: <code>false</code>.</span>
               <input type="checkbox" id="GetSchema-param-verbose" name="verbose">
             </div>
           </div>
@@ -717,7 +1249,10 @@ $client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })<
         </form>
       </div>
       <div id="GetSchema-demo-result" class="api-demo-result">
-        <div class="api-card-header"><i class="fas fa-reply" style="color:var(--warning);"></i> Response</div>
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="GetSchema-view-request-btn" onclick="viewRequestData('GetSchema')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="GetSchema-demo-result-code" class="language-json api-code-response"></code></pre>
       </div>
@@ -749,12 +1284,405 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
       </script>
     </div>
 
+    <!-- ExecGQL Section -->
+    <div id="exec-gql" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-bolt"></i> ExecGQL</h2>
+        <span class="method-badge">POST /RestAPI/api/ExecGQL</span>
+      </div>
+      <div class="api-desc">
+        This endpoint retrieves and/or sets attribute values for specified nodes. Use <b>get</b> to evaluate
+        expressions, and <b>set</b> to set values. At least one of <b>get</b> or <b>set</b> is required.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="ExecGQL-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="ExecGQL-param-nodes" class="api-param-name">nodes <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">Comma-delimited list of GQL paths or DBIDs to resolve. When constructing this
+                parameter manually, use a JSON array.</span>
+              <input type="text" id="ExecGQL-param-nodes" name="nodes" placeholder="e.g. #main_floor,1001,1002"
+                required>
+            </div>
+            <div class="api-param-div">
+              <label for="ExecGQL-param-get" class="api-param-name">get <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of GQL expressions to evaluate for each node. When
+                constructing this parameter manually, use a JSON array.</span>
+              <input type="text" id="ExecGQL-param-get" name="get" placeholder="e.g. present_value.value">
+            </div>
+            <div class="api-param-div">
+              <label for="ExecGQL-param-set-expression" class="api-param-name">set.expression <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of GQL expressions to set. Must match the number of
+                <code>set.value</code>. When constructing the <code>set</code> parameter manually, use a JSON array of
+                objects.</span>
+              <input type="text" id="ExecGQL-param-set-expression" name="set.expression"
+                placeholder="e.g. .display-name">
+            </div>
+            <div class="api-param-div">
+              <label for="ExecGQL-param-set-value" class="api-param-name">set.value <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of values to set. These values correspond to
+                <code>set.expression</code>.</span>
+              <input type="text" id="ExecGQL-param-set-value" name="set.value" placeholder="e.g. Main Floor">
+            </div>
+            <div class="api-param-div">
+              <label for="ExecGQL-param-fieldAccess" class="api-param-name">fieldAccess <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, information may be retrieved from devices in the field. Default:
+                <code>false</code>.</span>
+              <input type="checkbox" id="ExecGQL-param-fieldAccess" name="fieldAccess">
+            </div>
+            <div class="api-param-div">
+              <label for="ExecGQL-param-contextDBID" class="api-param-name">contextDBID <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, GQL paths in the <code>nodes</code> property will be resolved
+                relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
+              <input type="text" id="ExecGQL-param-contextDBID" name="contextDBID" inputmode="numeric"
+                placeholder="DBID (integer)" oninput="stripNonDigits(this)">
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="ExecGQL-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="ExecGQL-demo-result" class="api-demo-result">
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="ExecGQL-view-request-btn" onclick="viewRequestData('ExecGQL')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="ExecGQL-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+await client.sendRequest('ExecGQL', { nodes: ['#aces_vav-1'], get: ['dat/present_value.value'], fieldAccess: true });
+await client.sendRequest('ExecGQL', { nodes: ['#main_floor'], set: [ { expression: '.display-name', value: 'Main Floor' } ] });</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('ExecGQL', @{ nodes = @('#aces_vav-1'); get = @('dat/present_value.value'); fieldAccess = $true })
+$client.sendRequest('ExecGQL', @{ nodes = @('#main_floor'); set = @(@{ expression = '.display-name'; value = 'Main Floor' }) })</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('ExecGQL', () => {
+          const nodesVal = document.getElementById('ExecGQL-param-nodes').value.trim();
+          const getVal = document.getElementById('ExecGQL-param-get').value.trim();
+          const setExprVal = document.getElementById('ExecGQL-param-set-expression').value.trim();
+          const setValueVal = document.getElementById('ExecGQL-param-set-value').value.trim();
+          const fieldAccess = document.getElementById('ExecGQL-param-fieldAccess').checked;
+          const contextDBIDVal = document.getElementById('ExecGQL-param-contextDBID').value.trim();
+          let nodes = nodesVal ? nodesVal.split(',').map(s => {
+            s = s.trim();
+            return (/^\d+$/.test(s) ? BigInt(s) : s);
+          }).filter(Boolean) : undefined;
+          let get = getVal ? getVal.split(',').map(s => s.trim()).filter(Boolean) : undefined;
+          let set;
+          if (setExprVal && setValueVal) {
+            const exprs = setExprVal.split(',').map(s => s.trim());
+            const vals = setValueVal.split(',').map(s => s.trim());
+            if (exprs.length !== vals.length) {
+              alert('The number of set.expressions and set.values must match.');
+              return null;
+            }
+            set = exprs.map((e, i) => {
+              let v = vals[i];
+              if (v === 'null' || v === '') v = null;
+              else if (v === 'true') v = true;
+              else if (v === 'false') v = false;
+              else if (/^\d+$/.test(v)) v = BigInt(v);
+              else if (!isNaN(Number(v))) v = Number(v);
+              return { expression: e, value: v };
+            });
+          }
+          if (!get && !set) {
+            alert('At least one of get or set is required.');
+            return null;
+          }
+          let req = {};
+          if (nodes) req.nodes = nodes;
+          if (get) req.get = get;
+          if (set) req.set = set;
+          if (fieldAccess) req.fieldAccess = true;
+          if (contextDBIDVal && /^\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          return req;
+        });
+      </script>
+    </div>
+
+    <!-- CreateOperator Section -->
+    <div id="create-operator" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-user-plus"></i> CreateOperator</h2>
+        <span class="method-badge">POST /RestAPI/api/CreateOperator</span>
+      </div>
+      <div class="api-desc">
+        This endpoint creates a new operator or updates an existing one. You may specify a username, display name,
+        password, roles, and other options.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="CreateOperator-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="CreateOperator-param-username" class="api-param-name">username <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">The unique username for the operator. This field will be forced to
+                lowercase.</span>
+              <input type="text" id="CreateOperator-param-username" name="username" placeholder="e.g. asmith" required>
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-displayName" class="api-param-name">displayName <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If omitted when creating a new operator, the display name will be set to the
+                same value as the username. If updating an existing operator and this field is omitted, the operator's
+                display name will remain unchanged.</span>
+              <input type="text" id="CreateOperator-param-displayName" name="displayName"
+                placeholder="e.g. Alice Smith">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-password" class="api-param-name">password <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If omitted when creating a new operator, <code>Hvac1234!</code> will be used,
+                and <code>temporary</code> will default to true instead of false. If updating an existing operator and
+                this field is omitted, the operator's password will remain unchanged.</span>
+              <input type="text" id="CreateOperator-param-password" name="password" placeholder="e.g. Hvac1234!">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-hashed" class="api-param-name">hashed <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Set to true if the password is already hashed. Refer to <a
+                  href="./viewer.html?script=.%2Fpasswords.ps1" target="_blank"
+                  style="color:var(--primary);text-decoration:underline;"><code>passwords.ps1</code></a> for a
+                compatible hashing implementation. Default: <code>false</code>.</span>
+              <input type="checkbox" id="CreateOperator-param-hashed" name="hashed">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-temporary" class="api-param-name">temporary <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Require password change on next login. Default: <code>false</code>.</span>
+              <input type="checkbox" id="CreateOperator-param-temporary" name="temporary">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-exempt" class="api-param-name">exempt <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Exempt operator from password policy. Default: <code>false</code>.</span>
+              <input type="checkbox" id="CreateOperator-param-exempt" name="exempt">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-roles" class="api-param-name">roles <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of roles to assign to the operator. If empty, the
+                operator will have no permissions. Non-existent role names will be ignored. These values correspond to
+                reference names of system-wide privilege sets defined in the system. Note that all systems include a
+                built-in <code>administrator</code> role. When constructing this parameter manually, you should use a
+                JSON array instead of a comma-delimited string.</span>
+              <input type="text" id="CreateOperator-param-roles" name="roles" placeholder="e.g. administrator">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-groups" class="api-param-name">groups <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of groups to assign to the operator. If empty, the
+                operator will only be a member of the <code>everybody</code> group. Non-existent group names will be
+                ignored. These values correspond to reference names of operator groups defined in the system. When
+                constructing this parameter manually, you should use a JSON array instead of a comma-delimited
+                string.</span>
+              <input type="text" id="CreateOperator-param-groups" name="groups" placeholder="e.g. engineering,managers">
+            </div>
+            <div class="api-param-div">
+              <label for="CreateOperator-param-update" class="api-param-name">update <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, and an operator with the specified username already exists, then
+                update that operator with the provided details instead of returning an error. Default:
+                <code>false</code>.</span>
+              <input type="checkbox" id="CreateOperator-param-update" name="update">
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="CreateOperator-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="CreateOperator-demo-result" class="api-demo-result">
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="CreateOperator-view-request-btn" onclick="viewRequestData('CreateOperator')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="CreateOperator-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+await client.sendRequest('CreateOperator', { username: 'asmith', displayName: 'Alice Smith', password: 'Hvac1234!', roles: ['administrator'] });
+await client.sendRequest('CreateOperator', {
+  username: 'bob',
+  update: true,
+  hashed: true,
+  password: '{SSHA512}CuEf/r/gy43LFj9cZxq/g1phNujiO9ruSo7KGRcEtO6xvqI3XUFhMrQOkk+j15VBa1cqpRlrGSr9U9ZP9TAK716megNmu2Te'
+});</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('CreateOperator', @{ username = 'asmith'; displayName = 'Alice Smith'; password = 'Hvac1234!'; roles = @('administrator') })
+$client.sendRequest('CreateOperator', @{
+  username = 'bob'
+  update = $true
+  hashed = $true
+  password = '{SSHA512}CuEf/r/gy43LFj9cZxq/g1phNujiO9ruSo7KGRcEtO6xvqI3XUFhMrQOkk+j15VBa1cqpRlrGSr9U9ZP9TAK716megNmu2Te'
+})</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('CreateOperator', () => {
+          const username = document.getElementById('CreateOperator-param-username').value.trim().toLowerCase();
+          const displayName = document.getElementById('CreateOperator-param-displayName').value.trim();
+          const password = document.getElementById('CreateOperator-param-password').value.trim();
+          const hashed = document.getElementById('CreateOperator-param-hashed').checked;
+          const temporary = document.getElementById('CreateOperator-param-temporary').checked;
+          const exempt = document.getElementById('CreateOperator-param-exempt').checked;
+          const rolesVal = document.getElementById('CreateOperator-param-roles').value.trim();
+          const groupsVal = document.getElementById('CreateOperator-param-groups').value.trim();
+          const update = document.getElementById('CreateOperator-param-update').checked;
+          const req = { username };
+          if (displayName) req.displayName = displayName;
+          if (password) req.password = password;
+          if (hashed) req.hashed = true;
+          req.temporary = temporary;
+          req.exempt = exempt;
+          req.roles = rolesVal.split(',').map(s => s.trim()).filter(Boolean);
+          req.groups = groupsVal.split(',').map(s => s.trim()).filter(Boolean);
+          if (update) req.update = true;
+          return req;
+        });
+      </script>
+    </div>
+
+    <!-- DeleteOperator Section -->
+    <div id="delete-operator" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-user-slash"></i> DeleteOperator</h2>
+        <span class="method-badge">POST /RestAPI/api/DeleteOperator</span>
+      </div>
+      <div class="api-desc">
+        This endpoint deletes one or more operators from the system by username. You may specify a single username or a
+        comma-delimited list of usernames.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="DeleteOperator-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="DeleteOperator-param-operator" class="api-param-name">operator <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">The username(s) of the operator(s) to delete. Enter a single username or a
+                comma-delimited list. When constructing this parameter manually, you should use a JSON array instead of
+                a comma-delimited string.</span>
+              <input type="text" id="DeleteOperator-param-operator" name="operator" placeholder="e.g. alice,bob,charlie"
+                required>
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="DeleteOperator-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="DeleteOperator-demo-result" class="api-demo-result">
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="DeleteOperator-view-request-btn" onclick="viewRequestData('DeleteOperator')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="DeleteOperator-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+await client.sendRequest('DeleteOperator', { operator: 'alice' });
+await client.sendRequest('DeleteOperator', { operator: ['alice', 'bob'] });</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\\path\\to\\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+$client.sendRequest('DeleteOperator', @{ operator = 'alice' })
+$client.sendRequest('DeleteOperator', @{ operator = @('alice', 'bob') })</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('DeleteOperator', () => {
+          const operatorVal = document.getElementById('DeleteOperator-param-operator').value.trim();
+          let operator;
+          if (operatorVal.includes(',')) {
+            operator = operatorVal.split(',').map(s => s.trim()).filter(Boolean);
+          } else {
+            operator = operatorVal;
+          }
+          return { operator };
+        });
+      </script>
+    </div>
+
     <!-- Response Codes Section -->
     <div class="extra-section" id="response-codes">
       <div class="section-header">
         <h2><i class="fas fa-exclamation-circle"></i> HTTP Response Codes</h2>
       </div>
-
+      <div style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">
+        <b>Note:</b> These are the generic response codes. Specific endpoints may use additional codes (e.g, 201 for successful operator creation).
+      </div>
       <div class="response-codes">
         <div class="code-card">
           <h4><span class="status-code">200</span> Success</h4>
@@ -832,12 +1760,15 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
       return codeBlock.innerText;
     }
 
-    document.querySelectorAll('pre > code').forEach(code => {
+    function addCopyButtonToCode(code) {
+      if (!code || !code.parentElement) return;
       // Avoid double-adding
       if (code.parentElement.querySelector('.copy-btn')) return;
       const btn = createCopyButton();
       code.parentElement.appendChild(btn);
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async (e) => {
+        // Prevent click from bubbling to parent pre element
+        e.stopPropagation();
         const text = getCodeText(code);
         try {
           await navigator.clipboard.writeText(text);
@@ -854,6 +1785,10 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
           }, 1400);
         }
       });
+    }
+
+    document.querySelectorAll('pre > code').forEach(code => {
+      addCopyButtonToCode(code);
     });
 
     // Navigation functionality with history support
@@ -939,7 +1874,125 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
     window.addEventListener('resize', handleSidebarCollapse);
 
     hljs.highlightAll();
+
+    // Filter Builder Modal Logic
+    let currentFilterStepId = null;
+    let currentFilterType = null;
+    let pendingFilterUpdate = null; // Store the latest filter update without applying it
+
+    function openFilterBuilder(stepId, filterType) {
+      currentFilterStepId = stepId;
+      currentFilterType = filterType;
+      pendingFilterUpdate = null; // Clear any previous pending update
+
+      const modal = document.getElementById('filter-builder-modal');
+      const iframe = document.getElementById('filter-builder-iframe');
+
+      // Load existing filter into iframe if present
+      const textarea = document.getElementById(`SearchGQL-step-${stepId}-${filterType}`);
+      let existingFilter = textarea?.value.trim();
+      
+      // If textarea is empty, get the display value (respects default false for intermediateFilter, true for leafFilter)
+      if (!existingFilter) {
+        const display = document.getElementById(`SearchGQL-step-${stepId}-${filterType}-display`);
+        existingFilter = display?.textContent.trim() || '';
+      }
+
+      // Reset iframe src to reload it fresh
+      iframe.src = './filter-builder.html';
+
+      // Determine default filter value based on filter type
+      const defaultFilter = filterType === 'intermediateFilter' ? 'false' : 'true';
+
+      // Wait for iframe to load, then send configuration
+      iframe.onload = function () {
+        // Always send the default value so Reset button works correctly
+        setTimeout(() => {
+          iframe.contentWindow.postMessage({
+            type: 'SET_DEFAULT',
+            defaultFilter: defaultFilter
+          }, '*');
+        }, 50);
+
+        // Send existing filter if present
+        if (existingFilter) {
+          try {
+            // Validate it's valid JSON before sending
+            JSON.parse(existingFilter);
+            setTimeout(() => {
+              iframe.contentWindow.postMessage({
+                type: 'LOAD_FILTER',
+                filter: existingFilter
+              }, '*');
+            }, 100);
+          } catch (e) {
+            // Invalid JSON, just open empty builder
+          }
+        }
+      };
+
+      modal.classList.add('active');
+    }
+
+    function closeFilterBuilder() {
+      const modal = document.getElementById('filter-builder-modal');
+      
+      // Apply the pending filter update when closing
+      if (pendingFilterUpdate !== null && currentFilterStepId !== null && currentFilterType !== null) {
+        const textarea = document.getElementById(`SearchGQL-step-${currentFilterStepId}-${currentFilterType}`);
+        if (textarea) {
+          textarea.value = pendingFilterUpdate;
+          updateSearchGQLFilterDisplay(currentFilterStepId, currentFilterType);
+        }
+      }
+      
+      modal.classList.remove('active');
+      currentFilterStepId = null;
+      currentFilterType = null;
+      pendingFilterUpdate = null;
+    }
+
+    // Listen for messages from iframe
+    window.addEventListener('message', function (event) {
+      // Security: verify origin if needed
+      if (event.data && event.data.type === 'FILTER_UPDATED') {
+        if (currentFilterStepId !== null && currentFilterType !== null) {
+          // Store the update but don't apply it yet - wait for modal to close
+          pendingFilterUpdate = event.data.filter;
+        }
+      }
+    });
+
+    // Close modal on escape key
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        const modal = document.getElementById('filter-builder-modal');
+        if (modal.classList.contains('active')) {
+          closeFilterBuilder();
+        }
+      }
+    });
+
+    // Close modal when clicking outside
+    document.getElementById('filter-builder-modal')?.addEventListener('click', function (event) {
+      if (event.target === this) {
+        closeFilterBuilder();
+      }
+    });
   </script>
+
+  <!-- Filter Builder Modal -->
+  <div id="filter-builder-modal" class="filter-builder-modal">
+    <div class="filter-builder-container">
+      <div class="filter-builder-header">
+        <h3><i class="fas fa-tools"></i> Filter Builder</h3>
+        <button class="filter-builder-close" onclick="closeFilterBuilder()">
+          <i class="fas fa-times"></i> Close
+        </button>
+      </div>
+      <iframe id="filter-builder-iframe" class="filter-builder-iframe" src="about:blank"></iframe>
+    </div>
+  </div>
 </body>
 
 </html>

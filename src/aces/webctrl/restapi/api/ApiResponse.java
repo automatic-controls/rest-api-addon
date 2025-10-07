@@ -19,6 +19,9 @@ public class ApiResponse implements AutoCloseable {
   public DatabaseLink createLink(int flags) throws Throwable {
     return new DatabaseLink(getSession(), flags);
   }
+  public DatabaseLinkManager createLinkManager(int flags, long maxSessionAge, boolean autoCommit) throws Throwable {
+    return new DatabaseLinkManager(getSession(), flags, maxSessionAge, autoCommit);
+  }
   public UserSession getSession() throws Throwable {
     if (wbs==null){
       if (operator==null){

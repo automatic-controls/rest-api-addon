@@ -49,7 +49,7 @@
       // Determine icon based on extension
       const codeBlock = document.getElementById('code-block');
       const ext = scriptPath.split('.').pop().toLowerCase();
-      if (ext === 'psm1') {
+      if (ext === 'psm1' || ext === 'ps1') {
         fileIconElement.className = 'fa-solid fa-terminal';
         codeBlock.className = 'language-powershell';
       } else if (ext === 'js') {

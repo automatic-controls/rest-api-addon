@@ -4,6 +4,8 @@ public class Permissions {
   public final static int GetSchema = ++next;
   public final static int ResolveGQL = ++next;
   public final static int ExecCommand = ++next;
-  //public final static int SetGQL = ++next;
-  //public final static int FindNodes = ++next;
+  public final static int SearchGQL = ++next;
+  public final static int ExecGQL = ++next;
+  public final static int CreateOperator = ++next;
+  public final static int DeleteOperator = ++next;
 }

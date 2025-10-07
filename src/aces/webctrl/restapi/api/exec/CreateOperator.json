@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CreateOperator",
+  "description": "Creates or updates an operator.",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The unique username for the operator. This field will be forced to lowercase."
+    },
+    "displayName": {
+      "type": "string",
+      "minLength": 1,
+      "description": "If omitted when creating a new operator, the display name will be set to the same value as the username. If updating an existing operator and this field is omitted, the operator's display name will remain unchanged."
+    },
+    "password": {
+      "type": "string",
+      "minLength": 1,
+      "default": "Hvac1234!",
+      "description": "If omitted when creating a new operator, the default password will be used, and `temporary` will default to true instead of false. If updating an existing operator and this field is omitted, the operator's password will remain unchanged."
+    },
+    "hashed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Set to true if the password is already hashed. Note that hashed passwords must be prefixed with '{SSHA512}'."
+    },
+    "temporary": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the operator will be required to change their password upon first login."
+    },
+    "exempt": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, the operator will be exempt from the password policy."
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "List of roles to assign to the operator. If empty, the operator will have no permissions. Non-existent role names will be ignored. These values correspond to reference names of system-wide privilege sets defined in the system. Note that all systems include a built-in 'administrator' role.",
+      "uniqueItems": true
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "List of groups to assign to the operator. If empty, the operator will only be a member of the 'everybody' group. Non-existent group names will be ignored. These values correspond to reference names of operator groups defined in the system.",
+      "uniqueItems": true
+    },
+    "update": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, and an operator with the specified username already exists, then update that operator with the provided details instead of returning an error."
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "This parameter is ignored."
+    }
+  },
+  "required":[
+    "username"
+  ],
+  "additionalProperties": false
+}

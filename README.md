@@ -26,7 +26,11 @@ The add-on exposes the following endpoints:
 
 - `GetSchema` — Retrieves the JSON schema used to validate input for an API endpoint.
 - `ResolveGQL` — Resolves a GQL path or DBID and retrieves details about the node.
+- `SearchGQL` — Traverses the node tree starting from one or more root nodes, applying filters at each step to find matching nodes.
+- `ExecGQL` — Retrieves and/or sets attribute values for specified nodes.
 - `ExecCommand` — Executes manual commands on the server.
+- `CreateOperator` — Creates or updates an operator.
+- `DeleteOperator` — Deletes an operator from the system.
 
 ---
 

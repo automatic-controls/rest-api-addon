@@ -30,7 +30,6 @@ public class DatabaseLink implements AutoCloseable {
     this.readOnly = (flags&1)==0;
     cds = CoreDataSession.open(session, flags);
   }
-  
   /**
    * @return whether the underlying database connection is read-only.
    */
@@ -41,62 +40,138 @@ public class DatabaseLink implements AutoCloseable {
    * @return the CoreNode for the operator with the given username.
    */
   public CoreNode getOperator(String username) throws CoreIntegrityException, CoreNotFoundException {
-    return getNode("/trees/config/operators/operatorlist").getChildByAttribute(CoreNode.KEY, username.toLowerCase(), true);
+    return getNode("/trees/config/operators/operatorlist").getChildByAttribute(CoreNode.KEY, username, true);
   }
-  /**
-   * Creates a new administrative operator with the given username, displayName, and password.
-   * If an operator of the same username already exists, it is overwritten.
-   */
-  public CoreNode createOperator(String username, String displayName, String password, boolean rawPassword, boolean temporary, boolean exempt) throws CoreIntegrityException, CJDataValueException, CoreNotFoundException, CoreDatabaseException {
-    username = username.toLowerCase();
+  public CoreNode createOperator(String username, String displayName, String password, boolean hashed, Boolean temporary, Boolean exempt, Set<String> roles, Set<String> groups, Container<Boolean> update) throws CoreIntegrityException, CJDataValueException, CoreNotFoundException, CoreDatabaseException {
+    boolean exists = false;
     final CoreNode opList = getNode("/trees/config/operators/operatorlist");
-    int sort = -1;
-    if (opList.hasChildByAttribute(CoreNode.KEY, username)){
-      final CoreNode op = getOperator(username);
-      sort = op.getSort();
-      op.delete();
-    }
-    final CoreNode operator = getNode("/defs/core/operatorlist/operator").clone(opList, username.equals("administrator")?username:opList.makeUniqueRefName("operator"));
-    if (sort!=-1){
-      operator.setSort(sort);
-    }
-    operator.setAttribute(CoreNode.KEY, username);
-    if (rawPassword){
-      setRawPassword(operator, password, temporary, exempt);
-    }else{
-      setPassword(operator, password, temporary, exempt);
-    }
-    operator.getChild("roles").createNewChild().setCoreNodeAttribute(CoreNode.TARGET, getNode("/trees/config/roles/administrator"));
-    operator.setAttribute(NodeAttribute.lookup(CoreNode.DISPLAY_NAME, "en", true), displayName);
-    return operator;
-  }
-  /**
-   * Sets the password of the given operator.
-   */
-  public void setPassword(CoreNode operator, String password, boolean temporary, boolean exempt) throws CoreNotFoundException {
-    operator.getChild("password").setValueString(password);
-    operator.getChild("password_is_temporary").setBooleanAttribute(CoreNode.VALUE, temporary);
-    operator.getChild("operator_exempt").setBooleanAttribute(CoreNode.VALUE, exempt);
-  }
-  /**
-   * Sets the raw digested password of the given operator.
-   */
-  public void setRawPassword(CoreNode operator, String digest, boolean temporary, boolean exempt) throws CoreNotFoundException, CoreDatabaseException {
-    operator.getChild("password_is_temporary").setBooleanAttribute(CoreNode.VALUE, temporary);
-    operator.getChild("operator_exempt").setBooleanAttribute(CoreNode.VALUE, exempt);
-    final CoreNode passwordNode = operator.getChild("password");
-    final String oldDigest = passwordNode.getValueString();
-    if (!digest.equals(oldDigest)){
-      passwordNode.setRawValueString(digest);
-      operator.getChild("password_changed_date").setIntAttribute(CoreNode.VALUE, (int)(System.currentTimeMillis()/1000L));
-      Operator.clearLoginLockout(operator.getAttribute(CoreNode.KEY));
-      final CoreNode previous = operator.getChild("previous_passwords");
-      final List<CoreNode> oldPasswords = previous.getSortedChildren();
-      if (oldPasswords.size()>=20){
-        oldPasswords.get(0).delete();
+    CoreNode operator = null;
+    try{
+      operator = opList.getChildByAttribute(CoreNode.KEY, username, true);
+      if (!update.x){
+        return null;
       }
-      previous.createNewChild().setRawValueString(digest);
+      exists = true;
+    }catch(CoreNotFoundException e){}
+    update.x&=exists;
+    if (!update.x){
+      if (displayName==null){
+        displayName = username;
+      }
+      if (temporary==null){
+        temporary = password==null;
+      }
+      if (password==null){
+        password = "Hvac1234!";
+        hashed = false;
+      }
+      if (exempt==null){
+        exempt = false;
+      }
     }
+    username = username.toLowerCase();
+    HashSet<String> roleSet = null;
+    HashSet<String> groupSet = null;
+    if (roles!=null){
+      roleSet = new HashSet<>(Math.max(1,(int)Math.ceil(roles.size()/0.75)));
+      if (!roles.isEmpty()){
+        final CoreNode roleList = getNode("/trees/config/roles");
+        String name;
+        for (CoreNode n : roleList.getChildren()){
+          name = n.getReferenceName();
+          if (roles.contains(name)){
+            try{
+              if (!n.getChild("domain_role").getBooleanAttribute(CoreNode.VALUE)){
+                roleSet.add(name);
+              }
+            }catch(CoreNotFoundException e){}
+          }
+        }
+      }
+    }
+    if (groups!=null){
+      groupSet = new HashSet<>(Math.max(1,(int)Math.ceil(groups.size()/0.75)));
+      if (!groups.isEmpty()){
+        final CoreNode groupList = getNode("/trees/config/operator_groups");
+        String name;
+        for (CoreNode n : groupList.getChildren()){
+          name = n.getReferenceName();
+          if (groups.contains(name)){
+            groupSet.add(name);
+          }
+        }
+      }
+      groupSet.remove("everybody");
+    }
+    if (update.x){
+      if (!username.equals(operator.getAttribute(CoreNode.KEY))){
+        operator.setAttribute(CoreNode.KEY, username);
+      }
+    }else{
+      operator = getNode("/defs/core/operatorlist/operator").clone(opList, opList.makeUniqueRefName("operator"));
+      operator.setAttribute(CoreNode.KEY, username);
+    }
+    if (password!=null){
+      if (hashed){
+        operator.getChild("password").setRawValueString(password);
+        operator.getChild("password_changed_date").setIntAttribute(CoreNode.VALUE, (int)(System.currentTimeMillis()/1000L));
+        Operator.clearLoginLockout(username);
+        final CoreNode previous = operator.getChild("previous_passwords");
+        if (update.x){
+          final List<CoreNode> oldPasswords = previous.getSortedChildren();
+          if (oldPasswords.size()>=20){
+            oldPasswords.get(0).delete();
+          }
+        }
+        previous.createNewChild().setRawValueString(password);
+      }else{
+        operator.getChild("password").setValueString(password);
+      }
+    }
+    if (temporary!=null){
+      operator.getChild("password_is_temporary").setBooleanAttribute(CoreNode.VALUE, temporary);
+    }
+    if (exempt!=null){
+      operator.getChild("operator_exempt").setBooleanAttribute(CoreNode.VALUE, exempt);
+    }
+    if (displayName!=null){
+      operator.setAttribute(NodeAttribute.lookup(CoreNode.DISPLAY_NAME, "en", true), displayName);
+    }
+    if (roleSet!=null){
+      final CoreNode roleNode = operator.getChild("roles");
+      if (update.x){
+        String s;
+        for (CoreNode n :roleNode.getChildren()){
+          s = n.getAttribute(CoreNode.TARGET);
+          if (s!=null && s.startsWith("/trees/config/roles/")){
+            s = s.substring(20);
+            if (!roleSet.remove(s)){
+              n.delete();
+            }
+          }
+        }
+      }
+      for (String r :roleSet){
+        roleNode.createNewChild().setCoreNodeAttribute(CoreNode.TARGET, getNode("/trees/config/roles/"+r));
+      }
+    }
+    if (groupSet!=null){
+      final String refname = operator.getReferenceName();
+      if (update.x){
+        String s;
+        CoreNode members;
+        for (CoreNode n: getNode("/trees/config/operator_groups").getChildren()){
+          s = n.getReferenceName();
+          if (!s.equals("everybody") && (members=n.getChild("members")).hasChild(refname) && !groupSet.remove(s)){
+            members.getChild(refname).delete();
+          }
+        }
+      }
+      for (String g: groupSet){
+        getNode("/trees/config/operator_groups/"+g+"/members").createNewChild(refname).setCoreNodeAttribute(CoreNode.TARGET, operator);
+      }
+    }
+    return operator;
   }
   /**
    * @return the CoreNode corresponding to the given absolute path.
