@@ -1,6 +1,6 @@
 <extension version="1">
   <name>RestAPI</name>
   <description>Exposes an OpenAPI-compatible REST API.</description>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <vendor>Automatic Controls Equipment Systems, Inc.</vendor>
 </extension>

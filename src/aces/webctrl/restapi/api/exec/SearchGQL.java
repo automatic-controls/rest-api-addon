@@ -170,11 +170,14 @@ public class SearchGQL extends ApiBase {
               ret.add(n.getDbid());
             }
           }catch(CoreNotFoundException e){}catch(Throwable t){
-            final JSONObject err = new JSONObject(5);
-            err.put("dbid", dbid);
-            err.put("expression", jump);
-            err.put("error", t.getMessage());
-            errors.add(err);
+            final Throwable cause = t.getCause();
+            if (cause==null || !(cause instanceof CoreNotFoundException)){
+              final JSONObject err = new JSONObject(5);
+              err.put("dbid", dbid);
+              err.put("expression", jump);
+              err.put("error", t.getMessage());
+              errors.add(err);
+            }
           }
         }
       }
@@ -261,6 +264,12 @@ public class SearchGQL extends ApiBase {
         return ResolveGQL.eval(node, expression, !admin, fieldAccess, false) != null;
       }catch(CoreNotFoundException t){
         return false;
+      }catch(Throwable t){
+        final Throwable cause = t.getCause();
+        if (cause!=null && cause instanceof CoreNotFoundException){
+          return false;
+        }
+        throw t;
       }
     }
   }
@@ -328,6 +337,12 @@ public class SearchGQL extends ApiBase {
         result = ResolveGQL.eval(node, expression, !admin, fieldAccess, false);
       } catch (CoreNotFoundException e) {
         return false;
+      }catch(Throwable t){
+        final Throwable cause = t.getCause();
+        if (cause!=null && cause instanceof CoreNotFoundException){
+          return false;
+        }
+        throw t;
       }
       if (result == null) {
         return false;
