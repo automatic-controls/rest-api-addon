@@ -23,7 +23,7 @@
     "hashed": {
       "type": "boolean",
       "default": false,
-      "description": "Set to true if the password is already hashed. Note that hashed passwords must be prefixed with '{SSHA512}'."
+      "description": "Set to true if the password is already hashed. Note that hashed passwords must be prefixed with '{SSHA512}' (WebCTRL8.0+) or '{PBKDF2}' (WebCTRL10.0+)."
     },
     "temporary": {
       "type": "boolean",

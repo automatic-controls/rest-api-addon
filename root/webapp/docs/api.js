@@ -30,7 +30,7 @@ class WebCTRLAPIClient {
           this.#dbid = Number(m[1]);
         }else if (window.parent?.document){
           this.#dbid = Array.from(
-            Array.from(window.parent.document.querySelectorAll('IFRAME') ?? []).find(
+            Array.from(window.parent.parent.parent.parent.document.querySelectorAll('IFRAME') ?? []).find(
               iframe => iframe.src.includes('/navpane/')
             )?.contentWindow?.document?.querySelectorAll('IFRAME') ?? []
           ).map(

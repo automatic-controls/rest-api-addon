@@ -7,16 +7,16 @@ Compilation Flags:
 --release 11
 
 Runtime Dependencies:
-addonsupport-api-addon-1.10.0
-alarmmanager-api-addon-1.10.0
-bacnet-api-core-1.11.004-20250407.1435r
-datatable-api-addon-1.10.0
-directaccess-api-addon-1.10.0
-logicbuilder-api-addon-1.10.0
-semantics-api-addon-1.10.0
-tomcat-embed-core-9.0.104
-webaccess-api-addon-1.10.0
-xdatabase-api-addon-1.10.0
+addonsupport-api-addon-1.11.0
+alarmmanager-api-addon-1.11.0
+bacnet-api-core-1.11.006-20250512.1103r
+datatable-api-addon-1.11.0
+directaccess-api-addon-1.11.0
+logicbuilder-api-addon-1.11.0
+semantics-api-addon-1.11.0
+tomcat-embed-core-9.0.107
+webaccess-api-addon-1.11.0
+xdatabase-api-addon-1.11.0
 common-9.0.002
 commonbaseutils-2.0.5
 commonexceptions-9.0.002
