@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "GetTrendData",
+  "description": "Retrieves trend data for one or many sources. For many sources with large time intervals, consider splitting requests into smaller chunks to avoid timeouts.",
+  "type": "object",
+  "properties": {
+    "sources": {
+      "type": "array",
+      "description": "A list of GQL paths or DBIDs to resolve as trend sources.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "description": "A GQL path.",
+            "minLength": 1
+          },
+          {
+            "type": "integer",
+            "description": "A DBID."
+          }
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "startTime": {
+      "type": "integer",
+      "description": "Specifies the starting time boundary for trend data retrieval in milliseconds since the epoch. Numbers < 0 are treated as offsets from the current time.",
+      "default": 0
+    },
+    "endTime": {
+      "type": "integer",
+      "description": "Specifies the ending time boundary for trend data retrieval in milliseconds since the epoch. Numbers <= 0 are treated as offsets from the current time.",
+      "default": 0
+    },
+    "resolution": {
+      "type": "integer",
+      "description": "Approximately specifies the resolution for trend data retrieval in milliseconds.",
+      "default": 60000
+    },
+    "fieldAccess": {
+      "type": "boolean",
+      "description": "If true, information may be retrieved from devices in the field. It is suggested to leave this false unless you need it.",
+      "default": false
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "GQL paths in the `sources` property will be resolved relative to this node. If omitted, paths will be resolved relative to the root of the geo tree."
+    }
+  },
+  "required": [
+    "sources"
+  ],
+  "additionalProperties": false
+}

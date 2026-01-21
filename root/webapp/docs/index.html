@@ -23,6 +23,11 @@
         input.value = input.value.replace(/\D+/g, '');
       }
     }
+    function stripNonDigitsAllowNegative(input) {
+      if (input) {
+        input.value = input.value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
+      }
+    }
     function stringifyWithBigInts(o) {
       let hasBigInts = false;
       let ret = JSON.stringify(o, (_k, v) => {
@@ -192,6 +197,9 @@
         <li class="nav-item" data-target="delete-operator">
           <i class="fas fa-user-slash"></i> <span class="nav-label">DeleteOperator</span>
         </li>
+        <li class="nav-item" data-target="get-trend-data">
+          <i class="fas fa-chart-line"></i> <span class="nav-label">GetTrendData</span>
+        </li>
       </ul>
       <li class="nav-item" data-target="get-schema">
       </li>
@@ -263,6 +271,11 @@
                     class="fas fa-user-slash" style="margin-right:6px;"></i>DeleteOperator</a></b><br>
               <span style="color:var(--text-secondary);font-size:14px;">Delete one or more operators from the
                 system.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#get-trend-data" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-chart-line" style="margin-right:6px;"></i>GetTrendData</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Retrieve trend data for one or many sources over a specified time range.</span>
             </li>
             <!-- Add future endpoints here -->
           </ul>
@@ -1113,6 +1126,140 @@ $client.sendRequest('SearchGQL', @{
       </script>
     </div>
 
+    <!-- GetTrendData Section -->
+    <div id="get-trend-data" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-chart-line"></i> GetTrendData</h2>
+        <span class="method-badge">POST /RestAPI/api/GetTrendData</span>
+      </div>
+      <div class="api-desc">
+        Retrieves trend data for one or many sources. Each source is specified by a GQL path or DBID.
+        Time boundaries are specified in milliseconds since the epoch. Negative values for <code>startTime</code> and non-positive values for <code>endTime</code> are treated as offsets from the current time.
+        For many sources with large time intervals, consider splitting requests into smaller chunks to avoid timeouts. The response format of this endpoint mimics the structure used by WebCTRL's internal REST API for displaying trend data.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="GetTrendData-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="GetTrendData-param-sources" class="api-param-name">sources <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">Comma-delimited list of GQL paths or DBIDs to resolve as trend sources. When constructing this parameter manually, you should use a JSON array instead of a comma-delimited string.</span>
+              <input type="text" id="GetTrendData-param-sources" name="sources" placeholder="e.g. #vav-1/dat,#vav-2/dat,1001" required>
+            </div>
+            <div class="api-param-div">
+              <label for="GetTrendData-param-startTime" class="api-param-name">startTime <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Starting time boundary for trend data retrieval in milliseconds since the epoch. Numbers &lt; 0 are treated as offsets from the current time. Default: <code>0</code>.</span>
+              <input type="text" id="GetTrendData-param-startTime" name="startTime" inputmode="numeric" placeholder="e.g. -86400000 (24 hours ago)" oninput="stripNonDigitsAllowNegative(this)">
+            </div>
+            <div class="api-param-div">
+              <label for="GetTrendData-param-endTime" class="api-param-name">endTime <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Ending time boundary for trend data retrieval in milliseconds since the epoch. Numbers &lt;= 0 are treated as offsets from the current time. Default: <code>0</code> (current time).</span>
+              <input type="text" id="GetTrendData-param-endTime" name="endTime" inputmode="numeric" placeholder="e.g. 0 (now)" oninput="stripNonDigitsAllowNegative(this)">
+            </div>
+            <div class="api-param-div">
+              <label for="GetTrendData-param-resolution" class="api-param-name">resolution <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Approximately specifies the resolution for trend data retrieval in milliseconds. Default: <code>60000</code> (1 minute).</span>
+              <input type="text" id="GetTrendData-param-resolution" name="resolution" inputmode="numeric" placeholder="e.g. 60000" oninput="stripNonDigits(this)">
+            </div>
+            <div class="api-param-div">
+              <label for="GetTrendData-param-fieldAccess" class="api-param-name">fieldAccess <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If true, information may be retrieved from devices in the field. It is suggested to leave this false unless you need it. Default: <code>false</code>.</span>
+              <input type="checkbox" id="GetTrendData-param-fieldAccess" name="fieldAccess">
+            </div>
+            <div class="api-param-div">
+              <label for="GetTrendData-param-contextDBID" class="api-param-name">contextDBID <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, GQL paths in the <code>sources</code> property will be resolved relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
+              <input type="text" id="GetTrendData-param-contextDBID" name="contextDBID" inputmode="numeric"
+                placeholder="e.g. 1028" oninput="stripNonDigits(this)">
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="GetTrendData-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="GetTrendData-demo-result" class="api-demo-result">
+        <div class="api-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="GetTrendData-view-request-btn" onclick="viewRequestData('GetTrendData')" style="display:none;background:var(--info);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+        </div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="GetTrendData-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+// Get trend data for the last 24 hours with 5-minute resolution
+await client.sendRequest('GetTrendData', {
+  sources: ['#vav-1/dat', '#vav-2/dat'],
+  startTime: -86400000,  // 24 hours ago
+  endTime: 0,            // now
+  resolution: 300000     // 5 minutes
+});</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+# Get trend data for the last 24 hours with 5-minute resolution
+$client.sendRequest('GetTrendData', @{
+  sources = @('#vav-1/dat', '#vav-2/dat')
+  startTime = -86400000  # 24 hours ago
+  endTime = 0            # now
+  resolution = 300000    # 5 minutes
+})</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('GetTrendData', () => {
+          const sourcesVal = document.getElementById('GetTrendData-param-sources').value.trim();
+          const startTimeVal = document.getElementById('GetTrendData-param-startTime').value.trim();
+          const endTimeVal = document.getElementById('GetTrendData-param-endTime').value.trim();
+          const resolutionVal = document.getElementById('GetTrendData-param-resolution').value.trim();
+          const fieldAccess = document.getElementById('GetTrendData-param-fieldAccess').checked;
+          const contextDBIDVal = document.getElementById('GetTrendData-param-contextDBID').value.trim();
+
+          let sources = sourcesVal ? sourcesVal.split(',').map(s => {
+            s = s.trim();
+            return (/^\d+$/.test(s) ? BigInt(s) : s);
+          }).filter(Boolean) : undefined;
+
+          if (!sources || sources.length === 0) {
+            alert('At least one source is required.');
+            return null;
+          }
+
+          let req = { sources };
+          if (startTimeVal && /^-?\d+$/.test(startTimeVal)) req.startTime = BigInt(startTimeVal);
+          if (endTimeVal && /^-?\d+$/.test(endTimeVal)) req.endTime = BigInt(endTimeVal);
+          if (resolutionVal && /^\d+$/.test(resolutionVal)) req.resolution = BigInt(resolutionVal);
+          if (fieldAccess) req.fieldAccess = true;
+          if (contextDBIDVal && /^\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          return req;
+        });
+      </script>
+    </div>
+
     <!-- ExecCommand Section -->
     <div id="exec-command" class="api-section">
       <div class="section-header">
@@ -1864,6 +2011,12 @@ $client.sendRequest('DeleteOperator', @{ operator = @('alice', 'bob') })</code><
           sidebar.classList.add('collapsed');
           sidebarToggleIcon.classList.remove('fa-angle-left');
           sidebarToggleIcon.classList.add('fa-angle-right');
+        }
+      } else {
+        if (sidebar.classList.contains('collapsed')) {
+          sidebar.classList.remove('collapsed');
+          sidebarToggleIcon.classList.remove('fa-angle-right');
+          sidebarToggleIcon.classList.add('fa-angle-left');
         }
       }
     }

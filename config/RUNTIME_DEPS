@@ -10,3 +10,5 @@ file:directaccess-api:modules\directaccess
 file:directaccess:modules\directaccess
 file:manualcommands:modules\manualcommands
 file:datatable:modules\datatable
+file:trendgraph:modules\trendgraph
+file:json:webroot\WEB-INF\lib

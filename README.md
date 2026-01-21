@@ -31,6 +31,7 @@ The add-on exposes the following endpoints:
 - `ExecCommand` — Executes manual commands on the server.
 - `CreateOperator` — Creates or updates an operator.
 - `DeleteOperator` — Deletes an operator from the system.
+- `GetTrendData` — Retrieves trend data for one or many sources over a specified time range.
 
 ---
 
