@@ -13,7 +13,7 @@ public class GetTrendData extends ApiBase {
   private final static TrendCollector collector = new TrendCollector();
   @Override public JSONObject exec(JSONObject input, ApiResponse res) throws Throwable {
     JSONObject ret = new JSONObject();
-    final long contextDBID = input.getLongValue("contextDBID", -1);
+    final long contextDBID = input.getLongValue("contextDBID", 0L);
     final boolean fieldAccess = input.getBooleanValue("fieldAccess", false);
     final long startTime = input.getLongValue("startTime", 0);
     final long endTime = input.getLongValue("endTime", 0);
@@ -29,7 +29,16 @@ public class GetTrendData extends ApiBase {
         if (root instanceof Number) {
           dbids.add(((Number) root).longValue());
         } else if (root instanceof String) {
-          gqls.add(((String) root).trim());
+          final String s = ((String) root).trim();
+          if (ResolveGQL.longPattern.matcher(s).matches()){
+            try{
+              dbids.add(Long.parseLong(s));
+            }catch(NumberFormatException e){
+              gqls.add(s);
+            }
+          }else{
+            gqls.add(s);
+          }
         }
       }
     }
@@ -39,7 +48,7 @@ public class GetTrendData extends ApiBase {
         DatabaseLink link = res.createLink(0);
       ){
         CoreNode ctx,n;
-        if (contextDBID>=0){
+        if (contextDBID!=0){
           ctx = link.getNode(contextDBID);
         }else{
           ctx = link.getNode("/trees/geographic");

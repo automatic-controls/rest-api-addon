@@ -14,7 +14,7 @@ public class ExecCommand extends ApiBase {
     JSONObject ret = new JSONObject();
     final String cmd = input.getString("command");
     final boolean split = input.getBooleanValue("splitLines", false);
-    final long contextDBID = input.getLongValue("contextDBID", -1);
+    final long contextDBID = input.getLongValue("contextDBID", 0L);
     if (res.isAdmin() && input.getBooleanValue("dev", false)){
       res.getSession().setIsDeveloper(true);
     }
@@ -23,7 +23,7 @@ public class ExecCommand extends ApiBase {
       final DatabaseLink link = res.createLink(0);
     ){
       CoreNode node;
-      if (contextDBID>=0){
+      if (contextDBID!=0){
         node = link.getNode(contextDBID);
       }else{
         node = link.getNode("/trees/geographic");

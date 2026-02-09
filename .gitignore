@@ -12,3 +12,5 @@ lib
 **/*.zip
 openapi
 README.html
+**/*.view
+proxy

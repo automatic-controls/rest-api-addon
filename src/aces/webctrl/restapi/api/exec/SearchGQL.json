@@ -39,6 +39,11 @@
             "description": "If true, the nodes passed to this step are checked by `intermediateFilter` when starting the depth-first search. If false, only their descendants are checked.",
             "default": false
           },
+          "leafToggle": {
+            "type": "boolean",
+            "description": "If false, the default behavior is used (all the other documentation assumes this): nodes not matching `intermediateFilter` are checked against `leafFilter`. If true, nodes matching `intermediateFilter` are checked against `leafFilter` instead. In which case, `intermediateFilter` serves to include or exclude entire branches of the search, while `leafFilter` serves to filter nodes within those branches.",
+            "default": false
+          },
           "intermediateFilter": {
             "$ref": "#/definitions/filter",
             "description": "From the set of nodes passed to this step, descendants are iterated in a depth-first search. Every node encountered is tested against this filter. If it matches, its children are also searched. If it does not match, it is checked against `leafFilter`. Nodes matching the `leafFilter` are then used as the starting point in the next step.",

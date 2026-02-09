@@ -2,9 +2,11 @@ package aces.webctrl.restapi.api.exec;
 import aces.webctrl.restapi.api.*;
 import aces.webctrl.restapi.core.*;
 import java.util.*;
+import java.util.regex.*;
 import com.alibaba.fastjson2.*;
 import com.controlj.green.core.data.*;
 public class ResolveGQL extends ApiBase {
+  public final static Pattern longPattern = Pattern.compile("^-?+\\d{1,19}+$");
   public static String evalAndSet(CoreNode node, String expr, String value, boolean checkPriv, boolean fieldAccess) throws Throwable {
     expr = expand(node, expr, checkPriv, fieldAccess);
     if (expr==null){
@@ -30,10 +32,101 @@ public class ResolveGQL extends ApiBase {
     }
     return n;
   }
+  private static String getPath(CoreNode node, boolean relative, boolean display) throws Throwable {
+    final ArrayList<String> parts = new ArrayList<>(8);
+    final int sepLen = display?3:1;
+    int i = -sepLen, j,k;
+    String s;
+    while (true){
+      if (node==null){
+        return null;
+      }
+      if (node.isRootNode()){
+        s = "";
+      }else if (display){
+        s = node.getDisplayName();
+        if (s==null || s.isEmpty()){
+          s = node.getReferenceName();
+        }
+      }else{
+        s = node.getReferenceName();
+      }
+      j = s.length();
+      if (display && j==0){
+        break;
+      }
+      parts.add(s);
+      i+=j+sepLen;
+      if (j==0 || display && node.getNodeType()==NodeType.TREE){
+        break;
+      }
+      if (!display && s.charAt(0)=='#'){
+        if (relative){
+          k = parts.size();
+          if (k>1){
+            parts.remove(k-1);
+            i-=(j+sepLen);
+          }
+        }
+        break;
+      }
+      node = node.getParent();
+    }
+    if (i<=0){
+      return "/";
+    }
+    final StringBuilder sb = new StringBuilder(i);
+    for (i=parts.size()-1;i>=0;--i){
+      sb.append(parts.get(i));
+      if (i!=0){
+        sb.append(display?" / ":"/");
+      }
+    }
+    return sb.toString();
+  }
+  private static interface AttrResolver {
+    public String resolve(CoreNode node, boolean checkPriv, boolean fieldAccess, boolean display) throws Throwable;
+  }
+  private final static HashMap<String,AttrResolver> customAttrs = new HashMap<>(6);
+  static {
+    customAttrs.put("absolute-path", new AttrResolver(){
+      @Override public String resolve(CoreNode node, boolean checkPriv, boolean fieldAccess, boolean display) throws Throwable {
+        return getPath(node, false, false);
+      }
+    });
+    customAttrs.put("relative-path", new AttrResolver(){
+      @Override public String resolve(CoreNode node, boolean checkPriv, boolean fieldAccess, boolean display) throws Throwable {
+        return getPath(node, true, false);
+      }
+    });
+    customAttrs.put("display-path", new AttrResolver(){
+      @Override public String resolve(CoreNode node, boolean checkPriv, boolean fieldAccess, boolean display) throws Throwable {
+        return getPath(node, false, true);
+      }
+    });
+    customAttrs.put("node-type-text", new AttrResolver(){
+      @Override public String resolve(CoreNode node, boolean checkPriv, boolean fieldAccess, boolean display) throws Throwable {
+        return NodeType.toString(node.getNodeType());
+      }
+    });
+  }
   public static String eval(CoreNode node, String expr, boolean checkPriv, boolean fieldAccess, boolean display) throws Throwable {
     expr = expand(node, expr, checkPriv, fieldAccess);
     if (expr==null){
       return null;
+    }
+    final int i = expr.lastIndexOf('.');
+    if (i!=-1){
+      final String attr = expr.substring(i+1).trim().toLowerCase();
+      AttrResolver resolver;
+      if (!attr.isEmpty() && (resolver=customAttrs.get(attr))!=null){
+        expr = expr.substring(0,i).trim();
+        final CoreNode n = evalToNode(node, expr, checkPriv, fieldAccess);
+        if (n==null){
+          return null;
+        }
+        return resolver.resolve(n, checkPriv, fieldAccess, display);
+      }
     }
     final CoreNode.ExpInfo info = node.evalToExpInfo(expr);
     if (checkPriv && !info.node.hasViewPriv()){
@@ -103,11 +196,17 @@ public class ResolveGQL extends ApiBase {
       dbid = ((Number)p).longValue();
     }else{
       path = ((String)p).trim();
+      if (longPattern.matcher(path).matches()){
+        try{
+          dbid = Long.parseLong(path);
+          path = null;
+        }catch(NumberFormatException e){}
+      }
     }
     final boolean relative = input.getBooleanValue("relative", true);
     final boolean includeChildren = input.getBooleanValue("includeChildren", false);
     final boolean listAttr = input.getBooleanValue("listAttributes", false);
-    final long contextDBID = input.getLongValue("contextDBID", -1);
+    final long contextDBID = input.getLongValue("contextDBID", 0L);
     boolean fieldAccess = input.getBooleanValue("fieldAccess", false);
     final ArrayList<String> exprs = new ArrayList<>(4);
     Object expression = input.get("expression");
@@ -152,7 +251,7 @@ public class ResolveGQL extends ApiBase {
           node = null;
         }
       }else{
-        if (relative && contextDBID>=0){
+        if (relative && contextDBID!=0){
           node = link.getNode(contextDBID);
         }else{
           node = link.getNode("/trees/geographic");

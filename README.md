@@ -42,6 +42,16 @@ The add-on exposes the following endpoints:
 
 ---
 
+## :test_tube: Samples
+
+These sample snippets should be included in an HTML content control within a graphic.
+
+- [graphics-error-scraper](https://github.com/automatic-controls/graphics-error-scraper?tab=readme-ov-file#option-2-browser-based-tool) — Scan graphics for error messages.
+- [cp-export-import-utility](./samples/cp-export-import-utility.html) — Export and import control program properties.
+- [global-modify](./samples/global-modify.html) — Provides functionality similar to the native global modify.
+
+---
+
 ## :package: Third-Party Libraries
 
 This add-on uses the following third-party libraries:

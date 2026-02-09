@@ -3,6 +3,7 @@ class WebCTRLAPIClient {
   #publicApiKey;
   #privateApiKey;
   #cryptoKey;
+  #useApiKeyAuth;
   #dbid = null;
   retryCount = 3;
   retryDelay = 30000; // 30 seconds
@@ -17,9 +18,12 @@ class WebCTRLAPIClient {
     if (publicApiKey && privateApiKey){
       this.#publicApiKey = publicApiKey;
       this.#privateApiKey = privateApiKey;
+      // Use ApiKey auth if HTTPS and both keys are provided
+      this.#useApiKeyAuth = this.#url.startsWith('https://');
     }else{
       this.#publicApiKey = null;
       this.#privateApiKey = null;
+      this.#useApiKeyAuth = false;
     }
     this.#cryptoKey = null;
     if (resolveCurrentLocation){
@@ -72,7 +76,9 @@ class WebCTRLAPIClient {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         };
-        if (signature!==null){
+        if (this.#useApiKeyAuth){
+          headers['Authorization'] = `ApiKey ${this.#publicApiKey}:${this.#privateApiKey}`;
+        }else if (signature!==null){
           headers['Authorization'] = `Bearer ${signature}`;
         }
         response = await fetch(`${this.#url}/${endpoint}`, {
@@ -105,7 +111,7 @@ class WebCTRLAPIClient {
   async #buildJWT(endpoint, data) {
     let hasBigInts = false;
     let body = JSON.stringify(
-      this.#publicApiKey===null ? data : {
+      this.#publicApiKey===null || this.#useApiKeyAuth ? data : {
         iss: this.#publicApiKey,
         aud: endpoint,
         jti: crypto.randomUUID(),
@@ -130,7 +136,7 @@ class WebCTRLAPIClient {
     };
   }
   async #signWithHMACSHA256(data) {
-    if (this.#privateApiKey===null){
+    if (this.#privateApiKey===null || this.#useApiKeyAuth){
       return null;
     }
     const enc = new TextEncoder();

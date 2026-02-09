@@ -45,6 +45,7 @@ public class ApiHandler extends HttpServlet {
         req.setCharacterEncoding("UTF-8");
         res.setCharacterEncoding("UTF-8");
         res.addHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        res.addHeader("Access-Control-Allow-Origin", "*");
         res.setContentType("application/json");
         if (Initializer.stop){
           writeError(res, 500, "Add-on is shutting down.");
@@ -55,15 +56,26 @@ public class ApiHandler extends HttpServlet {
           return;
         }
         String auth = req.getHeader("Authorization");
+        boolean apikey = false;
         if (auth==null){
           if (!req.isUserInRole("login")){
             writeError(res, 403, "You do not have the required permissions to access this API.");
             return;
           }
         }else{
-          if (!auth.toLowerCase().startsWith("bearer ")){
-            writeError(res, 400, "Malformed Authorization header.");
-            return;
+          final String low = auth.toLowerCase();
+          if (!low.startsWith("bearer ")){
+            if (low.startsWith("apikey ")){
+              if (req.isSecure()){
+                apikey = true;
+              }else{
+                writeError(res, 400, "Cannot use ApiKey authorization over insecure connection.");
+                return;
+              }
+            }else{
+              writeError(res, 400, "Malformed Authorization header.");
+              return;
+            }
           }
           auth = auth.substring(7).trim();
           if (auth.length()==0){
@@ -110,6 +122,30 @@ public class ApiHandler extends HttpServlet {
         if (auth==null){
           bytes = null;
           operator = (Operator)(((CJPrincipal)req.getUserPrincipal()).getOperator());
+        }else if (apikey){
+          final int i = auth.indexOf(':');
+          if (i<0){
+            writeError(res, 403, "Invalid API key.");
+            return;
+          }
+          final ApiKey key = Config.getKey(auth.substring(0,i).trim());
+          if (key==null || !Arrays.equals(key.getPrivateKey(), auth.substring(i+1).trim().getBytes(StandardCharsets.UTF_8))){
+            writeError(res, 403, "Invalid API key.");
+            return;
+          }
+          if (!key.hasPermission(endpoint.perm)){
+            writeError(res, 403, "You do not have the required permissions to access this endpoint.");
+            return;
+          }
+          final String op = key.getOperator();
+          if (!op.isEmpty()){
+            try{
+              operator = Operator.getOperator(op);
+            }catch(Throwable t){
+              writeError(res, 403, "The operator corresponding to this API key could not be retrieved.");
+              return;
+            }
+          }
         }else{
           v = jwtSchema.validate(input);
           if (!v.isSuccess()){
@@ -207,6 +243,13 @@ public class ApiHandler extends HttpServlet {
         Initializer.log(e);
       }
     }
+  }
+  @Override public void doOptions(final HttpServletRequest req, final HttpServletResponse res){
+    res.addHeader("Access-Control-Allow-Origin", "*");
+    res.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    res.addHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, Accept");
+    res.addHeader("Access-Control-Max-Age", "3600");
+    res.setStatus(200);
   }
   private static void writeError(HttpServletResponse res, int status, String message) throws IOException {
     res.setStatus(status);

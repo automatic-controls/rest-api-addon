@@ -1,0 +1,903 @@
+openapi: 3.0.4
+info:
+  title: WebCTRL REST API
+  version: 1.0.0
+  description: |
+    The REST API Add-On provides secure access to WebCTRL server data and functionality via HTTP endpoints. 
+    It is designed for integration with custom clients, automation scripts, and web applications.
+    
+    ## Authentication
+    
+    This API uses API Key authentication for secure access over HTTPS.
+    
+    **Setup:**
+    - Generate an API key pair (public/private) from the WebCTRL add-on interface
+    - Configure the key with appropriate endpoint permissions
+    - Optionally associate the key with a specific operator account
+    
+    **Request Format:**
+    1. Combine your public and private keys: `{publicKey}:{privateKey}`
+    2. Send requests over HTTPS (required)
+    3. Include header: `Authorization: ApiKey {publicKey}:{privateKey}`
+    4. POST your request data as JSON in the request body
+    
+    **Security Notes:**
+    - API Key authentication is **only available over HTTPS** connections
+    - The server will reject API Key authentication attempts over insecure HTTP
+    - Each API key can be configured with specific endpoint permissions
+    - Keys can be associated with operator accounts for permission enforcement
+    
+  contact:
+    name: Automatic Controls Equipment Systems, LLC.
+    url: https://github.com/automatic-controls/rest-api-addon
+
+servers:
+  - url: https://{webctrl-server}/RestAPI/api
+    description: WebCTRL Server
+    variables:
+      webctrl-server:
+        default: localhost
+        description: Your WebCTRL server hostname or IP address
+
+tags:
+  - name: Schema
+    description: API schema and metadata operations
+  - name: GQL
+    description: GQL (Geographic Query Language) operations for node navigation and data access
+  - name: Commands
+    description: Server command execution
+  - name: Operators
+    description: Operator management
+  - name: Trends
+    description: Historical trend data retrieval
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /GetSchema:
+    post:
+      tags:
+        - Schema
+      summary: Get JSON schema for an API endpoint
+      description: Retrieves the JSON schema used to validate input for a specified API endpoint
+      operationId: getSchema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetSchemaRequest'
+            example:
+              endpoint: ResolveGQL
+              verbose: true
+      responses:
+        '200':
+          description: Successfully retrieved schema
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                $schema: http://json-schema.org/draft-07/schema#
+                title: ResolveGQL
+                type: object
+                properties:
+                  path:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ResolveGQL:
+    post:
+      tags:
+        - GQL
+      summary: Resolve a GQL path or DBID
+      description: |
+        Resolve a GQL path or DBID to one or more nodes, optionally evaluating an expression 
+        and/or including immediate children. Use this to navigate the node tree and retrieve 
+        detailed information about specific nodes.
+      operationId: resolveGQL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveGQLRequest'
+            examples:
+              simpleResolve:
+                summary: Resolve by path
+                value:
+                  path: "/area1/equipment1"
+                  listAttributes: true
+              resolveWithExpression:
+                summary: Resolve with expression evaluation
+                value:
+                  path: "/area1/equipment1/sensor1"
+                  expression: value
+                  fieldAccess: false
+      responses:
+        '200':
+          description: Successfully resolved node(s)
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                nodes:
+                  - path: "/area1/equipment1"
+                    dbid: 12345
+                    type: BEQU
+                    displayName: Equipment 1
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /SearchGQL:
+    post:
+      tags:
+        - GQL
+      summary: Search for nodes in the system
+      description: |
+        Traverse the node tree starting from one or more root nodes, applying filters at each 
+        step to find matching nodes. This powerful endpoint allows complex searches using 
+        filter expressions and multi-step traversal.
+      operationId: searchGQL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchGQLRequest'
+            example:
+              steps:
+                - intermediateFilter:
+                    hasType: [AREA]
+                  leafFilter:
+                    hasType: [BEQU]
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                nodes:
+                  - path: "/area1/equipment1"
+                    dbid: 12345
+                  - path: "/area2/equipment2"
+                    dbid: 12346
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ExecGQL:
+    post:
+      tags:
+        - GQL
+      summary: Get or set attribute values
+      description: |
+        Retrieves and/or sets attribute values for specified nodes. This endpoint allows you 
+        to read sensor values, control outputs, and modify system parameters.
+      operationId: execGQL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecGQLRequest'
+            examples:
+              getValues:
+                summary: Get attribute values
+                value:
+                  nodes:
+                    - "/area1/equipment1/temp_sensor"
+                  get:
+                    - value
+                    - units
+              setValue:
+                summary: Set an attribute value
+                value:
+                  nodes:
+                    - "/area1/equipment1/setpoint"
+                  set:
+                    - expression: value
+                      value: 72.5
+      responses:
+        '200':
+          description: Operation completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                results:
+                  - node: "/area1/equipment1/temp_sensor"
+                    value: 72.3
+                    units: "°F"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /ExecCommand:
+    post:
+      tags:
+        - Commands
+      summary: Execute a manual command
+      description: |
+        Executes manual commands on the server. These are the same commands available 
+        through the WebCTRL manual command interface.
+      operationId: execCommand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecCommandRequest'
+            example:
+              command: "help"
+              splitLines: true
+      responses:
+        '200':
+          description: Command executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                output: "Command executed successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /CreateOperator:
+    post:
+      tags:
+        - Operators
+      summary: Create or update an operator
+      description: |
+        Creates a new operator or updates an existing one. Operators are user accounts 
+        in the WebCTRL system with specific roles and permissions.
+      operationId: createOperator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOperatorRequest'
+            examples:
+              createNewOperator:
+                summary: Create a new operator
+                value:
+                  username: newuser
+                  displayName: New User
+                  password: SecurePass123!
+                  roles:
+                    - viewer
+                  groups:
+                    - operators
+              updateExistingOperator:
+                summary: Update an existing operator
+                value:
+                  username: existinguser
+                  roles:
+                    - administrator
+                  update: true
+      responses:
+        '200':
+          description: Operator created or updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                success: true
+                message: "Operator created successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /DeleteOperator:
+    post:
+      tags:
+        - Operators
+      summary: Delete operator(s)
+      description: Deletes one or more operators from the system
+      operationId: deleteOperator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteOperatorRequest'
+            examples:
+              deleteSingleOperator:
+                summary: Delete a single operator
+                value:
+                  operator: username1
+              deleteMultipleOperators:
+                summary: Delete multiple operators
+                value:
+                  operator:
+                    - username1
+                    - username2
+      responses:
+        '200':
+          description: Operator(s) deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                success: true
+                message: "Operator deleted successfully"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /GetTrendData:
+    post:
+      tags:
+        - Trends
+      summary: Retrieve trend data
+      description: |
+        Retrieves historical trend data for one or many sources over a specified time range. 
+        For many sources with large time intervals, consider splitting requests into smaller 
+        chunks to avoid timeouts.
+      operationId: getTrendData
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GetTrendDataRequest'
+            examples:
+              last24Hours:
+                summary: Get trend data for last 24 hours
+                value:
+                  sources:
+                    - "/area1/equipment1/temp_sensor"
+                  startTime: -86400000
+                  endTime: 0
+                  resolution: 300000
+              specificTimeRange:
+                summary: Get trend data for specific time range
+                value:
+                  sources:
+                    - 12345
+                    - 12346
+                  startTime: 1706140800000
+                  endTime: 1706227200000
+                  resolution: 60000
+      responses:
+        '200':
+          description: Trend data retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                sources:
+                  - path: "/area1/equipment1/temp_sensor"
+                    data:
+                      - timestamp: 1706140800000
+                        value: 72.1
+                      - timestamp: 1706140860000
+                        value: 72.3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: |
+        API Key authentication using the format: `ApiKey {publicKey}:{privateKey}`
+        
+        **Requirements:**
+        - Must be used over HTTPS connections only
+        - Format: `Authorization: ApiKey {publicKey}:{privateKey}`
+        - Both public and private keys are obtained from the WebCTRL add-on interface
+        
+        **Example:**
+        ```
+        Authorization: ApiKey abc123:xyz789secretkey
+        ```
+        
+        **Security:**
+        - Keys can be configured with specific endpoint permissions
+        - Keys can be associated with WebCTRL operator accounts
+        - The server enforces HTTPS and will reject API Key auth over HTTP
+
+  schemas:
+    GetSchemaRequest:
+      type: object
+      required:
+        - endpoint
+      properties:
+        endpoint:
+          type: string
+          description: The API endpoint to retrieve the schema for (case-insensitive)
+          minLength: 1
+          example: ResolveGQL
+        verbose:
+          type: boolean
+          description: If true, the returned schema will include additional description fields
+          default: false
+        contextDBID:
+          type: integer
+          description: This parameter is ignored
+      additionalProperties: false
+
+    ResolveGQLRequest:
+      type: object
+      properties:
+        path:
+          oneOf:
+            - type: string
+              description: The GQL path to resolve. An empty path resolves to the session's current context or the root of the geo tree
+            - type: integer
+              description: The DBID of the node to resolve
+          example: "/area1/equipment1"
+        expression:
+          oneOf:
+            - type: string
+              description: A single GQL expression to evaluate against the resolved node(s)
+            - type: array
+              items:
+                type: string
+              description: Multiple GQL expressions to evaluate
+              minItems: 1
+              uniqueItems: true
+          example: value
+        listAttributes:
+          type: boolean
+          description: If true, response includes a list of attributes for the resolved node
+          default: false
+        fieldAccess:
+          type: boolean
+          description: If true, information may be retrieved from devices in the field (use cautiously)
+          default: false
+        includeChildren:
+          type: boolean
+          description: If true, response includes immediate children of the resolved node
+          default: false
+        childFilter:
+          type: array
+          items:
+            type: string
+          description: List of node types to include when returning children (ignored if includeChildren is false)
+          minItems: 1
+          uniqueItems: true
+          default: [AREA, BEQU]
+        contextDBID:
+          type: integer
+          description: DBID to use as the session's context for resolving relative paths
+        relative:
+          type: boolean
+          description: If true, path is resolved relative to session's current context
+          default: true
+      additionalProperties: false
+
+    SearchGQLRequest:
+      type: object
+      required:
+        - steps
+      properties:
+        roots:
+          type: array
+          description: List of GQL paths or DBIDs as starting points (defaults to geo tree root)
+          items:
+            oneOf:
+              - type: string
+                minLength: 1
+              - type: integer
+          uniqueItems: true
+        fieldAccess:
+          type: boolean
+          description: If true, information may be retrieved from devices in the field
+          default: false
+        steps:
+          type: array
+          description: List of steps to apply in order. Each step filters nodes from the previous step
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SearchStep'
+        contextDBID:
+          type: integer
+          description: DBID to use for resolving paths in the roots property
+      additionalProperties: false
+
+    SearchStep:
+      type: object
+      properties:
+        includeRoots:
+          type: boolean
+          description: If true, root nodes are checked by intermediateFilter at search start
+          default: false
+        leafToggle:
+          type: boolean
+          description: If false, nodes not matching intermediateFilter are checked against leafFilter. If true, nodes matching intermediateFilter are also checked against leafFilter, so intermediateFilter includes or excludes branches while leafFilter selects nodes within those branches
+          default: false
+        intermediateFilter:
+          $ref: '#/components/schemas/NodeFilter'
+        leafFilter:
+          $ref: '#/components/schemas/NodeFilter'
+        jump:
+          type: string
+          minLength: 1
+          description: Optional GQL jump expression applied to nodes matching leafFilter
+      additionalProperties: false
+
+    NodeFilter:
+      oneOf:
+        - type: boolean
+          description: If true, all nodes match. If false, no nodes match
+        - type: object
+          description: Logical filter operators
+          properties:
+            and:
+              type: array
+              items:
+                $ref: '#/components/schemas/NodeFilter'
+              minItems: 2
+            or:
+              type: array
+              items:
+                $ref: '#/components/schemas/NodeFilter'
+              minItems: 2
+            not:
+              $ref: '#/components/schemas/NodeFilter'
+            hasGQL:
+              type: string
+              minLength: 1
+              description: GQL expression that must evaluate to a non-null value
+            hasType:
+              type: array
+              items:
+                oneOf:
+                  - type: string
+                    minLength: 1
+                  - type: integer
+                    minimum: 0
+              minItems: 1
+              uniqueItems: true
+              description: List of node types where at least one must match
+          minProperties: 1
+          maxProperties: 1
+        - type: object
+          description: Expression-based filter with comparison operators
+          required:
+            - expression
+          properties:
+            expression:
+              type: string
+              minLength: 1
+              description: GQL expression to evaluate and match against
+            equals:
+              oneOf:
+                - type: string
+                - type: number
+                - type: boolean
+              description: Value the expression must equal
+            regex:
+              type: string
+              minLength: 1
+              description: Regular expression pattern to match (Java Pattern syntax)
+            greaterThan:
+              type: number
+            lessThan:
+              type: number
+            greaterThanOrEqual:
+              type: number
+            lessThanOrEqual:
+              type: number
+          minProperties: 2
+          maxProperties: 2
+
+    ExecGQLRequest:
+      type: object
+      required:
+        - nodes
+      properties:
+        nodes:
+          type: array
+          description: List of GQL paths or DBIDs to resolve
+          items:
+            oneOf:
+              - type: string
+                minLength: 1
+              - type: integer
+          uniqueItems: true
+          minItems: 1
+        get:
+          type: array
+          description: List of GQL expressions to evaluate for each node
+          items:
+            type: string
+            minLength: 1
+          uniqueItems: true
+          minItems: 1
+        set:
+          type: array
+          description: List of GQL expressions to evaluate and set to corresponding values
+          items:
+            type: object
+            required:
+              - expression
+              - value
+            properties:
+              expression:
+                type: string
+                minLength: 1
+              value:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+                  - type: "null"
+                description: The value to set (string, number, boolean, or null)
+            additionalProperties: false
+          uniqueItems: true
+          minItems: 1
+        fieldAccess:
+          type: boolean
+          description: If true, information may be retrieved from devices in the field
+          default: false
+        contextDBID:
+          type: integer
+          description: DBID for resolving GQL paths in the nodes property
+      anyOf:
+        - required: [get]
+        - required: [set]
+      additionalProperties: false
+
+    ExecCommandRequest:
+      type: object
+      required:
+        - command
+      properties:
+        command:
+          type: string
+          description: The manual command to execute
+          minLength: 1
+        splitLines:
+          type: boolean
+          description: If true, output is split into an array of lines. If false, output is a single string
+          default: false
+        contextDBID:
+          type: integer
+          description: If provided, this DBID will be used as the current location
+        dev:
+          type: boolean
+          default: false
+      additionalProperties: false
+
+    CreateOperatorRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          minLength: 1
+          description: Unique username for the operator (will be forced to lowercase)
+        displayName:
+          type: string
+          minLength: 1
+          description: Display name for the operator (defaults to username if creating new)
+        password:
+          type: string
+          minLength: 1
+          description: Password for the operator (defaults to "Hvac1234!" if creating new)
+          default: Hvac1234!
+        hashed:
+          type: boolean
+          description: Set to true if password is already hashed (must be prefixed with {SSHA512} or {PBKDF2})
+          default: false
+        temporary:
+          type: boolean
+          description: If true, operator must change password on first login
+          default: false
+        exempt:
+          type: boolean
+          description: If true, operator is exempt from password policy
+          default: false
+        roles:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: List of roles to assign (corresponds to system-wide privilege sets)
+          uniqueItems: true
+        groups:
+          type: array
+          items:
+            type: string
+            minLength: 1
+          description: List of groups to assign (defaults to 'everybody' group only)
+          uniqueItems: true
+        update:
+          type: boolean
+          description: If true, updates existing operator instead of returning error
+          default: false
+        contextDBID:
+          type: integer
+          description: This parameter is ignored
+      additionalProperties: false
+
+    DeleteOperatorRequest:
+      type: object
+      required:
+        - operator
+      properties:
+        operator:
+          oneOf:
+            - type: string
+              minLength: 1
+              description: Username of the operator to delete
+            - type: array
+              items:
+                type: string
+                minLength: 1
+              minItems: 1
+              uniqueItems: true
+              description: List of operator usernames to delete
+        contextDBID:
+          type: integer
+          description: This parameter is ignored
+      additionalProperties: false
+
+    GetTrendDataRequest:
+      type: object
+      required:
+        - sources
+      properties:
+        sources:
+          type: array
+          description: List of GQL paths or DBIDs to resolve as trend sources
+          items:
+            oneOf:
+              - type: string
+                minLength: 1
+              - type: integer
+          uniqueItems: true
+          minItems: 1
+        startTime:
+          type: integer
+          description: Start time in milliseconds since epoch. Negative values are offsets from current time
+          default: 0
+        endTime:
+          type: integer
+          description: End time in milliseconds since epoch. Values <= 0 are offsets from current time
+          default: 0
+        resolution:
+          type: integer
+          description: Approximate resolution for trend data in milliseconds
+          default: 60000
+        fieldAccess:
+          type: boolean
+          description: If true, information may be retrieved from devices in the field
+          default: false
+        contextDBID:
+          type: integer
+          description: DBID for resolving GQL paths in the sources property
+      additionalProperties: false
+
+    Error:
+      type: object
+      properties:
+        error:
+          oneOf:
+            - type: string
+              description: Error message
+            - type: array
+              items:
+                type: string
+              description: Stack trace lines (when verbose logging is enabled)
+
+  responses:
+    BadRequest:
+      description: Bad request - Invalid input or malformed JWT
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            malformedJson:
+              value:
+                error: "Failed to parse JSON from request body"
+            invalidJWT:
+              value:
+                error: "JWT issued-at time is not within 5 minutes of current time"
+            validationError:
+              value:
+                error: "Malformed data: Missing required field 'endpoint'"
+
+    Forbidden:
+      description: Forbidden - Authentication failed or insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            invalidApiKey:
+              value:
+                error: "Invalid API key"
+            invalidSignature:
+              value:
+                error: "Invalid JWT signature"
+            insufficientPermissions:
+              value:
+                error: "You do not have the required permissions to access this endpoint"
+
+    NotFound:
+      description: Not found - Endpoint or resource does not exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Endpoint does not exist"
+
+    Conflict:
+      description: Conflict - JWT nonce collision (replay attack detected)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "JWT nonce collision has occurred"
+
+    TooManyRequests:
+      description: Too many requests - Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Rate limit has been exceeded"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              - "java.lang.NullPointerException"
+              - "    at aces.webctrl.restapi.api.ApiBase.exec(ApiBase.java:42)"

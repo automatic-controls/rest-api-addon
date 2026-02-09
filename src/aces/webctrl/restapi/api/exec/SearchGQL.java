@@ -9,7 +9,7 @@ public class SearchGQL extends ApiBase {
   @Override
   public JSONObject exec(JSONObject input, ApiResponse res) throws Throwable {
     final JSONObject ret = new JSONObject();
-    final long contextDBID = input.getLongValue("contextDBID", -1);
+    final long contextDBID = input.getLongValue("contextDBID", 0L);
     final boolean fieldAccess = input.getBooleanValue("fieldAccess", false);
     JSONArray roots = input.getJSONArray("roots");
     JSONArray steps = input.getJSONArray("steps");
@@ -22,7 +22,16 @@ public class SearchGQL extends ApiBase {
         if (root instanceof Number) {
           searchQueue.add(((Number) root).longValue());
         } else if (root instanceof String) {
-          rootGQLs.add(((String) root).trim());
+          final String s = ((String) root).trim();
+          if (ResolveGQL.longPattern.matcher(s).matches()){
+            try{
+              searchQueue.add(Long.parseLong(s));
+            }catch(NumberFormatException e){
+              rootGQLs.add(s);
+            }
+          }else{
+            rootGQLs.add(s);
+          }
         }
       }
     }
@@ -37,7 +46,7 @@ public class SearchGQL extends ApiBase {
         DatabaseLink link = res.createLink(0);
       ){
         CoreNode ctx,n;
-        if (contextDBID>=0){
+        if (contextDBID!=0){
           ctx = link.getNode(contextDBID);
         }else{
           ctx = link.getNode("/trees/geographic");
@@ -95,6 +104,7 @@ public class SearchGQL extends ApiBase {
 
   private static class Step {
     private final boolean includeRoots;
+    private final boolean leafToggle;
     private final Filter intermediateFilter;
     private final Filter leafFilter;
     private final String jump;
@@ -102,6 +112,7 @@ public class SearchGQL extends ApiBase {
     private final boolean fieldAccess;
     public Step(JSONObject o, boolean admin, boolean fieldAccess) throws Throwable {
       includeRoots = o.getBooleanValue("includeRoots", false);
+      leafToggle = o.getBooleanValue("leafToggle", false);
       intermediateFilter = new Filter(o.get("intermediateFilter"), admin, fieldAccess, false);
       leafFilter = new Filter(o.get("leafFilter"), admin, fieldAccess, true);
       jump = o.getString("jump");
@@ -116,10 +127,19 @@ public class SearchGQL extends ApiBase {
           n = dlm.getLink().getNode(dbid);
           if (n!=null && (admin || n.hasViewPriv())){
             try{
-              if (intermediateFilter.test(n)){
-                queue.add(dbid);
-              }else if (leafFilter.test(n)){
-                nextQueue.add(dbid);
+              if (leafToggle){
+                if (intermediateFilter.test(n)){
+                  queue.add(dbid);
+                  if (leafFilter.test(n)){
+                    nextQueue.add(dbid);
+                  }
+                }
+              }else{
+                if (intermediateFilter.test(n)){
+                  queue.add(dbid);
+                }else if (leafFilter.test(n)){
+                  nextQueue.add(dbid);
+                }
               }
             }catch(Throwable t){
               final JSONObject err = new JSONObject(4);
@@ -139,10 +159,20 @@ public class SearchGQL extends ApiBase {
           for (CoreNode c: n.getChildren()){
             if (admin || c.hasViewPriv()){
               try{
-                if (intermediateFilter.test(c)){
-                  queue.addLast(c.getDbid());
-                }else if (leafFilter.test(c)){
-                  nextQueue.add(c.getDbid());
+                dbid = c.getDbid();
+                if (leafToggle){
+                  if (intermediateFilter.test(c)){
+                    queue.addLast(dbid);
+                    if (leafFilter.test(c)){
+                      nextQueue.add(dbid);
+                    }
+                  }
+                }else{
+                  if (intermediateFilter.test(c)){
+                    queue.addLast(dbid);
+                  }else if (leafFilter.test(c)){
+                    nextQueue.add(dbid);
+                  }
                 }
               }catch(Throwable t){
                 final JSONObject err = new JSONObject(4);

@@ -288,7 +288,7 @@
         </div>
         <div style="color:var(--text-secondary);margin-bottom:8px;">
           To begin using the API, review the authentication requirements, then explore the available endpoints. SDKs are
-          provided for rapid integration, or you can use your own HTTP client. You may also wish to review the <a href="./gql.html" target="_blank" style="color:var(--primary);text-decoration:underline;">GQL Path Quick Reference</a>.
+          provided for rapid integration, or you can use your own HTTP client. You may also wish to review the <a href="./gql.html" target="_blank" style="color:var(--primary);text-decoration:underline;">GQL Path Quick Reference</a> or the <a href="./openapi.yaml" target="_blank" style="color:var(--primary);text-decoration:underline;">OpenAPI 3.0.4 Specification</a>.
         </div>
       </div>
     </div>
@@ -302,31 +302,56 @@
       <div class="api-info-card api-info-primary">
         <div class="api-info-header" style="gap:14px;">
           <i class="fas fa-user-shield" style="font-size:28px;color:var(--primary);"></i>
-          <span style="font-size:20px;font-weight:600;">API Key Pair</span>
+          <span style="font-size:20px;font-weight:600;">Authentication Methods</span>
         </div>
         <div style="margin-bottom:10px;">
-          <span style="color:var(--text-secondary);">You need a <b>public</b> and <b>private</b> API key. The public key
+          <span style="color:var(--text-secondary);">This API supports two authentication methods. You need a <b>public</b> and <b>private</b> API key for both methods. The public key
             can be shared; the private key must be kept secret.</span>
         </div>
-        <div style="margin-bottom:10px;">
-          <i class="fas fa-arrow-right" style="color:var(--primary);"></i>
-          <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> and expect a
-            <b>JWT payload</b> in the request body.</span>
+        <div style="margin-bottom:16px;padding:12px;background:var(--background);border-radius:6px;border-left:4px solid var(--success);">
+          <div style="font-weight:600;color:var(--success);margin-bottom:6px;"><i class="fas fa-shield-alt"></i> ApiKey Authentication (HTTPS Only)</div>
+          <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">The recommended method for HTTPS connections. Simple and secure.</div>
+          <div style="margin-bottom:8px;">
+            <i class="fas fa-arrow-right" style="color:var(--success);"></i>
+            <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> with your request data as JSON in the body.</span>
+          </div>
+          <div style="margin-bottom:8px;">
+            <i class="fas fa-lock" style="color:var(--success);"></i>
+            <span style="font-weight:500;">The <code>Authorization</code> header contains: <code>ApiKey {publicKey}:{privateKey}</code></span>
+          </div>
+          <div>
+            <i class="fas fa-exclamation-triangle" style="color:var(--warning);"></i>
+            <span style="font-weight:500;color:var(--warning);">Only available over HTTPS. The server will reject ApiKey authentication over insecure HTTP.</span>
+          </div>
+          <pre style="margin:12px 0 0 0;"><code class="language-http">Authorization: ApiKey {publicKey}:{privateKey}
+Content-Type: application/json
+Accept: application/json</code></pre>
         </div>
-        <div style="margin-bottom:10px;">
-          <i class="fas fa-lock" style="color:var(--primary);"></i>
-          <span style="font-weight:500;">The <code>Authorization</code> header must contain a Bearer token: an
-            <b>HMAC-SHA-256 signature</b> of the JWT payload, generated with your private API key.</span>
+        <div style="margin-bottom:10px;padding:12px;background:var(--background);border-radius:6px;border-left:4px solid var(--info);">
+          <div style="font-weight:600;color:var(--info);margin-bottom:6px;"><i class="fas fa-key"></i> JWT Authentication (HTTP & HTTPS)</div>
+          <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">Supported over both HTTP and HTTPS. Uses HMAC-SHA256 signatures.</div>
+          <div style="margin-bottom:8px;">
+            <i class="fas fa-arrow-right" style="color:var(--info);"></i>
+            <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> with a <b>JWT payload</b> in the request body.</span>
+          </div>
+          <div style="margin-bottom:8px;">
+            <i class="fas fa-lock" style="color:var(--info);"></i>
+            <span style="font-weight:500;">The <code>Authorization</code> header contains a Bearer token: an <b>HMAC-SHA-256 signature</b> of the JWT payload.</span>
+          </div>
+          <div>
+            <i class="fas fa-info-circle" style="color:var(--info);"></i>
+            <span>Includes nonce-based replay protection and time-based expiration.</span>
+          </div>
+          <pre style="margin:12px 0 0 0;"><code class="language-http">Authorization: Bearer &lt;HMAC-SHA-256 signature of JWT payload&gt;
+Content-Type: application/json
+Accept: application/json</code></pre>
         </div>
-        <div style="margin-bottom:10px;">
+        <div style="margin-bottom:0px;">
           <i class="fas fa-user-check" style="color:var(--primary);"></i>
-          <span>If your session is already authenticated to WebCTRL, a signature is not required. This means API keys
+          <span>If your session is already authenticated to WebCTRL, neither authentication method is required. This means API keys
             are unnecessary when invoked by JavaScript from an add-on's main page that is accessed by a logged-in user
             (which is precisely how these documentation pages allow users to test endpoints).</span>
         </div>
-        <pre style="margin:18px 0 0 0;"><code class="language-http">Authorization: Bearer &lt;HMAC-SHA-256 signature of JWT payload&gt;
-Content-Type: application/json
-Accept: application/json</code></pre>
       </div>
 
       <div class="api-info-card api-info-info">
@@ -370,7 +395,7 @@ Accept: application/json</code></pre>
       <div class="api-info-card api-info-error">
         <div class="api-info-header">
           <i class="fas fa-shield-alt" style="color:var(--error);"></i>
-          <span style="font-size:17px;font-weight:600;">Security Notes</span>
+          <span style="font-size:17px;font-weight:600;">Security Notes (JWT Authentication)</span>
         </div>
         <ul style="margin-left:10px;margin-bottom:0;">
           <li>JWTs are only accepted if generated within <b>5 minutes</b> of the current time, as indicated by the
@@ -385,6 +410,10 @@ Accept: application/json</code></pre>
           <li>A rate limit of <b>2000 requests per minute</b> per API key is enforced.</li>
           <li>There is a <b>16 KB limit</b> on the total size of the request body.</li>
         </ul>
+        <div style="margin-top:12px;padding:10px;background:var(--background);border-radius:6px;color:var(--text-secondary);font-size:15px;">
+          <i class="fas fa-info-circle" style="color:var(--error);"></i>
+          <b>ApiKey Authentication:</b> ApiKey authentication does not use nonces or time-based expiration, so there are no JWT-specific security restrictions. However, it requires HTTPS and enforces the same body size limits.
+        </div>
       </div>
 
       <div class="api-info-card api-info-primary-light" style="margin-bottom:0;">
@@ -460,6 +489,10 @@ Accept: application/json</code></pre>
         explicitly specify a server URL or API keys:
         <pre
           style="margin:8px 0 0 0;background:var(--background);padding:8px 12px;border-radius:6px;"><code class="language-javascript">new WebCTRLAPIClient('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY');</code></pre>
+        <div style="margin-top:8px;padding:8px;background:var(--background);border-radius:6px;color:var(--text-secondary);font-size:14px;">
+          <i class="fas fa-shield-alt" style="color:var(--success);"></i>
+          When both API keys are provided and the connection is HTTPS, the client automatically uses <b>ApiKey authentication</b> for simplicity. For HTTP connections, it falls back to JWT authentication.
+        </div>
       </div>
       <div style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">
         <i class="fas fa-lightbulb" style="color:var(--warning);font-size:15px;"></i>
@@ -513,6 +546,10 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
         <span style="margin-left:22px;">It will retry up to <b><code>retryCount</code></b> times (default: 3), waiting
           <b><code>retryDelay</code></b> milliseconds (default: 30000) between attempts for 429 responses. This helps
           your code gracefully handle rate limits and nonce collisions</span>
+      </div>
+      <div class="api-desc api-note" style="margin-bottom:12px;">
+        <i class="fas fa-shield-alt" style="color:var(--success);font-size:15px;"></i>
+        &nbsp;When connecting over HTTPS, this module automatically uses <b>ApiKey authentication</b> for simplicity. For HTTP connections, it falls back to JWT authentication.
       </div>
       <div class="api-desc api-note" style="margin-bottom:12px;">
         <i class="fas fa-lightbulb" style="color:var(--warning);font-size:15px;"></i>
@@ -601,7 +638,7 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
                 used as the session's context for resolving relative paths. This field is auto-populated by the
                 JavaScript SDK.</span>
               <input type="text" id="ResolveGQL-param-contextDBID" name="ResolveGQL-param-contextDBID"
-                inputmode="numeric" placeholder="DBID (integer)" oninput="stripNonDigits(this)">
+                inputmode="numeric" placeholder="DBID (integer)" oninput="stripNonDigitsAllowNegative(this)">
             </div>
             <div class="api-param-div">
               <label for="ResolveGQL-param-relative" class="api-param-name">relative <span
@@ -637,6 +674,7 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
           <div class="api-tabs">
             <button class="api-tab active" data-tab="js"><i class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -666,20 +704,44 @@ $client.sendRequest('ResolveGQL', @{
   relative = $true
 })</code></pre>
           </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/ResolveGQL \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "path": "#main_floor"
+  }'
+
+curl -X POST https://localhost/RestAPI/api/ResolveGQL \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "path": "0/0",
+    "expression": ["~actions/0.value"],
+    "listAttributes": false,
+    "fieldAccess": false,
+    "includeChildren": true,
+    "childFilter": ["AREA"],
+    "contextDBID": 1028,
+    "relative": true
+  }'</code></pre>
+          </div>
         </div>
       </div>
       <script>
         registerEndpointDemo('ResolveGQL', () => {
           const pathVal = document.getElementById('ResolveGQL-param-path').value.trim();
           let path;
-          if (pathVal.length > 0 && /^\d+$/.test(pathVal)) {
+          if (pathVal.length > 0 && /^-?\d+$/.test(pathVal)) {
             path = BigInt(pathVal);
           } else {
             path = pathVal;
           }
 
           let contextDBIDVal = document.getElementById('ResolveGQL-param-contextDBID').value.trim();
-          let contextDBID = contextDBIDVal && /^\d+$/.test(contextDBIDVal) ? BigInt(contextDBIDVal) : undefined;
+          let contextDBID = contextDBIDVal && /^-?\d+$/.test(contextDBIDVal) ? BigInt(contextDBIDVal) : undefined;
 
           let childFilterVal = document.getElementById('ResolveGQL-param-childFilter').value.trim();
           let childFilter = undefined;
@@ -739,10 +801,12 @@ $client.sendRequest('ResolveGQL', @{
           <li><b>includeRoots:</b> If true, the input nodes are tested against <code>intermediateFilter</code> (and potentially <code>leafFilter</code>). If false, only the children of input nodes are tested.</li>
           <li><b>intermediateFilter:</b> Recursively applied during tree traversal. If a node matches, its children are explored in the next iteration. The step continues through multiple recursive iterations until only leaf nodes remain.</li>
           <li><b>leafFilter:</b> Applied to leaf nodes (nodes with no children or nodes that didn't match <code>intermediateFilter</code>). Matching nodes are included in the final results.</li>
+          <li><b>leafToggle:</b> If false (default), the standard behavior is used: nodes <em>not</em> matching <code>intermediateFilter</code> are checked against <code>leafFilter</code>. If true, nodes <em>matching</em> <code>intermediateFilter</code> are also checked against <code>leafFilter</code>. In this mode <code>intermediateFilter</code> includes or excludes entire branches, while <code>leafFilter</code> selects nodes within those branches.</li>
         </ul>
         <b>How a step works:</b> Starting with input nodes, if <code>includeRoots</code> is true, test them against <code>intermediateFilter</code>. 
         For nodes matching <code>intermediateFilter</code>, recursively explore their children. This recursion continues until no more nodes match <code>intermediateFilter</code>.
         Finally, apply <code>leafFilter</code> to all remaining leaf nodes to determine which are returned as results.
+        When <code>leafToggle</code> is true, nodes that match <code>intermediateFilter</code> are tested against <code>leafFilter</code>, instead so <code>leafFilter</code> selects results from within the searched branches rather than only at their boundaries.
         Use multiple steps to build complex hierarchical searches.
       </div>
       <div class="api-live-demo">
@@ -772,7 +836,7 @@ $client.sendRequest('ResolveGQL', @{
               <span class="api-param-desc">If provided, GQL paths in the <code>roots</code> property will be resolved
                 relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
               <input type="text" id="SearchGQL-param-contextDBID" name="contextDBID" inputmode="numeric"
-                placeholder="DBID (integer)" oninput="stripNonDigits(this)">
+                placeholder="DBID (integer)" oninput="stripNonDigitsAllowNegative(this)">
             </div>
             <div class="api-param-div">
               <label class="api-param-name">steps <span class="api-param-required">(required)</span></label>
@@ -810,6 +874,7 @@ $client.sendRequest('ResolveGQL', @{
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -851,6 +916,29 @@ $client.sendRequest('SearchGQL', @{
     }
   )
 })</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/SearchGQL \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "steps": [
+      {
+        "intermediateFilter": { "hasType": ["AREA"] },
+        "leafFilter": {
+          "and": [
+            { "hasType": ["BEQU"] },
+            {
+              "expression": ".definition",
+              "equals": "/defs/equipment/vav_hw_rht"
+            }
+          ]
+        },
+        "jump": "dat"
+      }
+    ]
+  }'</code></pre>
           </div>
         </div>
       </div>
@@ -912,6 +1000,11 @@ $client.sendRequest('SearchGQL', @{
                 <label for="SearchGQL-step-${stepId}-includeRoots" class="api-param-name">includeRoots <span class="api-param-optional">(optional)</span></label>
                 <span class="api-param-desc">If true, the nodes passed to this step are checked by intermediateFilter when starting the depth-first search. If false, only their descendants are checked. Default: <code>false</code>.</span>
                 <input type="checkbox" id="SearchGQL-step-${stepId}-includeRoots">
+              </div>
+              <div class="api-param-div">
+                <label for="SearchGQL-step-${stepId}-leafToggle" class="api-param-name">leafToggle <span class="api-param-optional">(optional)</span></label>
+                <span class="api-param-desc">If false, nodes <em>not</em> matching <code>intermediateFilter</code> are checked against <code>leafFilter</code>. If true, nodes matching <code>intermediateFilter</code> are checked against <code>leafFilter</code>, so <code>intermediateFilter</code> includes or excludes branches while <code>leafFilter</code> selects nodes within those branches.</span>
+                <input type="checkbox" id="SearchGQL-step-${stepId}-leafToggle">
               </div>
               <div class="api-param-div">
                 <label class="api-param-name" style="display:block;margin-bottom:6px;">intermediateFilter <span class="api-param-optional">(optional)</span></label>
@@ -1077,7 +1170,7 @@ $client.sendRequest('SearchGQL', @{
 
           let roots = rootsVal ? rootsVal.split(',').map(s => {
             s = s.trim();
-            return (/^\d+$/.test(s) ? BigInt(s) : s);
+            return (/^-?\d+$/.test(s) ? BigInt(s) : s);
           }).filter(Boolean) : undefined;
 
           const stepsContainer = document.getElementById('SearchGQL-steps-container');
@@ -1089,12 +1182,14 @@ $client.sendRequest('SearchGQL', @{
             const stepId = stepDiv.id.match(/SearchGQL-step-(\d+)/)[1];
 
             const includeRoots = document.getElementById(`SearchGQL-step-${stepId}-includeRoots`).checked;
+            const leafToggle = document.getElementById(`SearchGQL-step-${stepId}-leafToggle`).checked;
             const intermediateFilterStr = document.getElementById(`SearchGQL-step-${stepId}-intermediateFilter`).value;
             const leafFilterStr = document.getElementById(`SearchGQL-step-${stepId}-leafFilter`).value;
             const jump = document.getElementById(`SearchGQL-step-${stepId}-jump`).value.trim();
 
             const step = {};
             if (includeRoots) step.includeRoots = true;
+            if (leafToggle) step.leafToggle = true;
 
             const intermediateFilter = parseSearchGQLFilter(intermediateFilterStr);
             if (intermediateFilter !== undefined) step.intermediateFilter = intermediateFilter;
@@ -1115,7 +1210,7 @@ $client.sendRequest('SearchGQL', @{
           let req = { steps };
           if (roots) req.roots = roots;
           if (fieldAccess) req.fieldAccess = true;
-          if (contextDBIDVal && /^\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          if (contextDBIDVal && /^-?\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
           return req;
         });
 
@@ -1179,7 +1274,7 @@ $client.sendRequest('SearchGQL', @{
                   class="api-param-optional">(optional)</span></label>
               <span class="api-param-desc">If provided, GQL paths in the <code>sources</code> property will be resolved relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
               <input type="text" id="GetTrendData-param-contextDBID" name="contextDBID" inputmode="numeric"
-                placeholder="e.g. 1028" oninput="stripNonDigits(this)">
+                placeholder="e.g. 1028" oninput="stripNonDigitsAllowNegative(this)">
             </div>
           </div>
           <div class="api-btn-test-div">
@@ -1206,6 +1301,7 @@ $client.sendRequest('SearchGQL', @{
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -1228,6 +1324,19 @@ $client.sendRequest('GetTrendData', @{
   resolution = 300000    # 5 minutes
 })</code></pre>
           </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash"># Get trend data for the last 24 hours with 5-minute resolution
+curl -X POST https://localhost/RestAPI/api/GetTrendData \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "sources": ["#vav-1/dat", "#vav-2/dat"],
+    "startTime": -86400000,
+    "endTime": 0,
+    "resolution": 300000
+  }'</code></pre>
+          </div>
         </div>
       </div>
       <script>
@@ -1241,7 +1350,7 @@ $client.sendRequest('GetTrendData', @{
 
           let sources = sourcesVal ? sourcesVal.split(',').map(s => {
             s = s.trim();
-            return (/^\d+$/.test(s) ? BigInt(s) : s);
+            return (/^-?\d+$/.test(s) ? BigInt(s) : s);
           }).filter(Boolean) : undefined;
 
           if (!sources || sources.length === 0) {
@@ -1254,7 +1363,7 @@ $client.sendRequest('GetTrendData', @{
           if (endTimeVal && /^-?\d+$/.test(endTimeVal)) req.endTime = BigInt(endTimeVal);
           if (resolutionVal && /^\d+$/.test(resolutionVal)) req.resolution = BigInt(resolutionVal);
           if (fieldAccess) req.fieldAccess = true;
-          if (contextDBIDVal && /^\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          if (contextDBIDVal && /^-?\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
           return req;
         });
       </script>
@@ -1297,7 +1406,7 @@ $client.sendRequest('GetTrendData', @{
               <span class="api-param-desc">If provided, this DBID will be
                 used as the current location. This field is auto-populated by the JavaScript SDK.</span>
               <input type="text" id="ExecCommand-param-contextDBID" name="contextDBID" placeholder="DBID (integer)"
-                oninput="stripNonDigits(this)">
+                oninput="stripNonDigitsAllowNegative(this)">
             </div>
           </div>
           <div class="api-btn-test-div">
@@ -1324,6 +1433,7 @@ $client.sendRequest('GetTrendData', @{
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -1333,6 +1443,15 @@ console.log(await client.sendRequest('ExecCommand', { command: 'cd #device_01_g5
             <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
 $client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
 $client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/ExecCommand \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "command": "cd #device_01_g5re | modstat"
+  }'</code></pre>
           </div>
         </div>
       </div>
@@ -1344,7 +1463,7 @@ $client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })<
           }
           let splitLines = document.getElementById('ExecCommand-param-splitLines').checked;
           let contextDBIDVal = document.getElementById('ExecCommand-param-contextDBID').value.trim();
-          let contextDBID = contextDBIDVal && /^\d+$/.test(contextDBIDVal) ? BigInt(contextDBIDVal) : undefined;
+          let contextDBID = contextDBIDVal && /^-?\d+$/.test(contextDBIDVal) ? BigInt(contextDBIDVal) : undefined;
           let req = { command: commandVal };
           if (splitLines) req.splitLines = true;
           if (typeof contextDBID !== 'undefined') req.contextDBID = contextDBID;
@@ -1410,6 +1529,7 @@ $client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })<
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -1419,6 +1539,15 @@ console.log(await client.sendRequest('GetSchema', { endpoint: 'ResolveGQL' }));<
             <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
 $client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
 $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/GetSchema \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "endpoint": "ResolveGQL"
+  }'</code></pre>
           </div>
         </div>
       </div>
@@ -1492,7 +1621,7 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
               <span class="api-param-desc">If provided, GQL paths in the <code>nodes</code> property will be resolved
                 relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
               <input type="text" id="ExecGQL-param-contextDBID" name="contextDBID" inputmode="numeric"
-                placeholder="DBID (integer)" oninput="stripNonDigits(this)">
+                placeholder="DBID (integer)" oninput="stripNonDigitsAllowNegative(this)">
             </div>
           </div>
           <div class="api-btn-test-div">
@@ -1519,6 +1648,7 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -1530,6 +1660,31 @@ await client.sendRequest('ExecGQL', { nodes: ['#main_floor'], set: [ { expressio
 $client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
 $client.sendRequest('ExecGQL', @{ nodes = @('#aces_vav-1'); get = @('dat/present_value.value'); fieldAccess = $true })
 $client.sendRequest('ExecGQL', @{ nodes = @('#main_floor'); set = @(@{ expression = '.display-name'; value = 'Main Floor' }) })</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/ExecGQL \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "nodes": ["#aces_vav-1"],
+    "get": ["dat/present_value.value"],
+    "fieldAccess": true
+  }'
+
+curl -X POST https://localhost/RestAPI/api/ExecGQL \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "nodes": ["#main_floor"],
+    "set": [
+      {
+        "expression": ".display-name",
+        "value": "Main Floor"
+      }
+    ]
+  }'</code></pre>
           </div>
         </div>
       </div>
@@ -1543,7 +1698,7 @@ $client.sendRequest('ExecGQL', @{ nodes = @('#main_floor'); set = @(@{ expressio
           const contextDBIDVal = document.getElementById('ExecGQL-param-contextDBID').value.trim();
           let nodes = nodesVal ? nodesVal.split(',').map(s => {
             s = s.trim();
-            return (/^\d+$/.test(s) ? BigInt(s) : s);
+            return (/^-?\d+$/.test(s) ? BigInt(s) : s);
           }).filter(Boolean) : undefined;
           let get = getVal ? getVal.split(',').map(s => s.trim()).filter(Boolean) : undefined;
           let set;
@@ -1559,7 +1714,7 @@ $client.sendRequest('ExecGQL', @{ nodes = @('#main_floor'); set = @(@{ expressio
               if (v === 'null' || v === '') v = null;
               else if (v === 'true') v = true;
               else if (v === 'false') v = false;
-              else if (/^\d+$/.test(v)) v = BigInt(v);
+              else if (/^-?\d+$/.test(v)) v = BigInt(v);
               else if (!isNaN(Number(v))) v = Number(v);
               return { expression: e, value: v };
             });
@@ -1573,7 +1728,7 @@ $client.sendRequest('ExecGQL', @{ nodes = @('#main_floor'); set = @(@{ expressio
           if (get) req.get = get;
           if (set) req.set = set;
           if (fieldAccess) req.fieldAccess = true;
-          if (contextDBIDVal && /^\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          if (contextDBIDVal && /^-?\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
           return req;
         });
       </script>
@@ -1694,6 +1849,7 @@ $client.sendRequest('ExecGQL', @{ nodes = @('#main_floor'); set = @(@{ expressio
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -1715,6 +1871,29 @@ $client.sendRequest('CreateOperator', @{
   hashed = $true
   password = '{SSHA512}CuEf/r/gy43LFj9cZxq/g1phNujiO9ruSo7KGRcEtO6xvqI3XUFhMrQOkk+j15VBa1cqpRlrGSr9U9ZP9TAK716megNmu2Te'
 })</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/CreateOperator \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "username": "asmith",
+    "displayName": "Alice Smith",
+    "password": "Hvac1234!",
+    "roles": ["administrator"]
+  }'
+
+curl -X POST https://localhost/RestAPI/api/CreateOperator \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "username": "bob",
+    "update": true,
+    "hashed": true,
+    "password": "{SSHA512}CuEf/r/gy43LFj9cZxq/g1phNujiO9ruSo7KGRcEtO6xvqI3XUFhMrQOkk+j15VBa1cqpRlrGSr9U9ZP9TAK716megNmu2Te"
+  }'</code></pre>
           </div>
         </div>
       </div>
@@ -1794,6 +1973,7 @@ $client.sendRequest('CreateOperator', @{
             <button class="api-tab js-tab active" data-tab="js"><i
                 class="fab fa-js-square"></i>&nbsp;JavaScript</button>
             <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
           </div>
           <div class="api-tab-content js-tab active">
             <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
@@ -1801,10 +1981,27 @@ await client.sendRequest('DeleteOperator', { operator: 'alice' });
 await client.sendRequest('DeleteOperator', { operator: ['alice', 'bob'] });</code></pre>
           </div>
           <div class="api-tab-content ps-tab">
-            <pre><code class="language-powershell">using module 'C:\\path\\to\\WebCTRLAPIClient'
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
 $client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
 $client.sendRequest('DeleteOperator', @{ operator = 'alice' })
 $client.sendRequest('DeleteOperator', @{ operator = @('alice', 'bob') })</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/DeleteOperator \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "operator": "alice"
+  }'
+
+curl -X POST https://localhost/RestAPI/api/DeleteOperator \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "operator": ["alice", "bob"]
+  }'</code></pre>
           </div>
         </div>
       </div>

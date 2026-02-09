@@ -2,6 +2,7 @@ class WebCTRLAPIClient {
   [string]$_url
   [string]$_publicApiKey
   [string]$_privateApiKey
+  [bool]$_useApiKeyAuth
   [hashtable]$config = @{
     retryCount = 3
     retryDelay = 30000  # 30 seconds
@@ -17,6 +18,8 @@ class WebCTRLAPIClient {
     if ($publicApiKey -and $privateApiKey) {
       $this._publicApiKey = $publicApiKey
       $this._privateApiKey = $privateApiKey
+      # Use ApiKey auth if HTTPS and both keys are provided
+      $this._useApiKeyAuth = $this._url.StartsWith('https://')
     }else{
       throw [System.ArgumentException]::new("Invalid API keys.")
     }
@@ -40,7 +43,11 @@ class WebCTRLAPIClient {
         $request = [System.Net.Http.HttpRequestMessage]::new([System.Net.Http.HttpMethod]::Post, "$($this._url)/$endpoint")
         $content = [System.Net.Http.StringContent]::new($jwt.body, [System.Text.Encoding]::UTF8, 'application/json')
         $request.Content = $content
-        $request.Headers.Add("Authorization", "Bearer $($jwt.signature)")
+        if ($this._useApiKeyAuth) {
+          $request.Headers.Add("Authorization", "ApiKey $($this._publicApiKey):$($this._privateApiKey)")
+        }else{
+          $request.Headers.Add("Authorization", "Bearer $($jwt.signature)")
+        }
         $request.Headers.Add("Accept", "application/json")
         $response = $httpClient.SendAsync($request).Result
         $stat = $response.StatusCode.value__
@@ -59,6 +66,13 @@ class WebCTRLAPIClient {
     }
   }
   [hashtable] BuildJWT([string]$endpoint, [hashtable]$data) {
+    if ($this._useApiKeyAuth) {
+      $body = $data | ConvertTo-Json -Compress -Depth 20
+      return @{
+        body      = $body
+        signature = $null
+      }
+    }
     $body = @{
       iss  = $this._publicApiKey
       aud  = $endpoint
