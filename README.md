@@ -48,6 +48,7 @@ These sample snippets should be included in an HTML content control within a gra
 
 - [graphics-error-scraper](https://github.com/automatic-controls/graphics-error-scraper?tab=readme-ov-file#option-2-browser-based-tool) — Scan graphics for error messages.
 - [cp-export-import-utility](./samples/cp-export-import-utility.html) — Export and import control program properties.
+  - [import.logic-script](./samples/import.logic-script) - Import properties back into EIKON
 - [global-modify](./samples/global-modify.html) — Provides functionality similar to the native global modify.
 
 ---
