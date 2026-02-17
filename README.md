@@ -47,8 +47,7 @@ The add-on exposes the following endpoints:
 These sample snippets should be included in an HTML content control within a graphic.
 
 - [graphics-error-scraper](https://github.com/automatic-controls/graphics-error-scraper?tab=readme-ov-file#option-2-browser-based-tool) — Scan graphics for error messages.
-- [cp-export-import-utility](./samples/cp-export-import-utility.html) — Export and import control program properties.
-  - [import.logic-script](./samples/import.logic-script) - Import properties back into EIKON
+- [cp-property-import-export-addon](https://github.com/automatic-controls/cp-property-import-export-addon) — Export and import control program properties.
 - [global-modify](./samples/global-modify.html) — Provides functionality similar to the native global modify.
 
 ---
