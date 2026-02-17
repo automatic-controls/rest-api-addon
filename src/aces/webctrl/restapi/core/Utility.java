@@ -236,34 +236,18 @@ public class Utility {
    * @return a {@code byte[]} array containing all remaining bytes read from the {@code InputStream}, or {@code null} if the limit is exceeded.
    */
   public static byte[] readAllBytes(InputStream s, int limit) throws IOException {
-    ArrayList<byte[]> list = new ArrayList<byte[]>();
-    int len = 0;
-    byte[] buf;
+    final byte[] buffer = new byte[limit > 0 ? Math.min(limit, 8192) : 8192];
+    final ByteArrayOutputStream out = new ByteArrayOutputStream(buffer.length);
+    int total = 0;
     int read;
-    while (true){
-      buf = new byte[8192];
-      read = s.read(buf);
-      if (read==-1){
-        break;
-      }
-      len+=read;
-      if (limit>0 && len>limit){
+    while ((read = s.read(buffer, 0, buffer.length)) != -1){
+      total += read;
+      if (limit > 0 && total > limit){
         return null;
       }
-      list.add(buf);
-      if (read!=buf.length){
-        break;
-      }
+      out.write(buffer, 0, read);
     }
-    byte[] arr = new byte[len];
-    int i = 0;
-    for (byte[] bytes:list){
-      read = Math.min(bytes.length,len);
-      len-=read;
-      System.arraycopy(bytes, 0, arr, i, read);
-      i+=read;
-    }
-    return arr;
+    return out.toByteArray();
   }
   /**
    * Loads all bytes from the given resource and convert to a {@code UTF-8} string.

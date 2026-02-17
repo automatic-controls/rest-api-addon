@@ -73,7 +73,7 @@ class WebCTRLAPIClient {
         }
         const { body, signature } = await this.#buildJWT(endpoint, data);
         let headers = {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json'
         };
         if (this.#useApiKeyAuth){
