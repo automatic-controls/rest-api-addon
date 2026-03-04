@@ -44,11 +44,9 @@ The add-on exposes the following endpoints:
 
 ## :test_tube: Samples
 
-These sample snippets should be included in an HTML content control within a graphic.
-
 - [graphics-error-scraper](https://github.com/automatic-controls/graphics-error-scraper?tab=readme-ov-file#option-2-browser-based-tool) — Scan graphics for error messages.
 - [cp-property-import-export-addon](https://github.com/automatic-controls/cp-property-import-export-addon) — Export and import control program properties.
-- [global-modify](./samples/global-modify.html) — Provides functionality similar to the native global modify.
+- [global-modify-addon](https://github.com/automatic-controls/global-modify-addon) — Provides functionality similar to the native global modify.
 
 ---
 
@@ -56,6 +54,6 @@ These sample snippets should be included in an HTML content control within a gra
 
 This add-on uses the following third-party libraries:
 
-- [fastjson2](https://github.com/alibaba/fastjson2) v2.0.58 — High-performance JSON parser and serializer for Java.
+- [fastjson2](https://github.com/alibaba/fastjson2) v2.0.60 — High-performance JSON parser and serializer for Java.
 - [fontawesome](https://fontawesome.com/) v6.7.2 — Icon toolkit for scalable vector icons.
 - [highlight.js](https://highlightjs.org/) v11.11.1 — Syntax highlighting for code blocks in documentation.

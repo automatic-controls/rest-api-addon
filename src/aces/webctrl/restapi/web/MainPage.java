@@ -44,9 +44,23 @@ public class MainPage extends ServletBase {
         break;
       }
       case "load":{
-        final String s = Config.listKeys(effUsername);
+        final String s = Config.getJSON(effUsername);
         res.setContentType("application/json");
         res.getWriter().print(s);
+        break;
+      }
+      case "insecure":{
+        if (effUsername!=null){
+          res.setStatus(403);
+          return;
+        }
+        final String val = req.getParameter("val");
+        if (val==null || val.isBlank()){
+          res.setStatus(400);
+          return;
+        }
+        Config.permitInsecureConnections = Boolean.parseBoolean(val);
+        Config.saveData();
         break;
       }
       case "delete":{

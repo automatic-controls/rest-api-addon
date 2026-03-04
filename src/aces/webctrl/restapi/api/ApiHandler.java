@@ -66,7 +66,7 @@ public class ApiHandler extends HttpServlet {
           final String low = auth.toLowerCase();
           if (!low.startsWith("bearer ")){
             if (low.startsWith("apikey ")){
-              if (req.isSecure()){
+              if (req.isSecure() || Config.permitInsecureConnections){
                 apikey = true;
               }else{
                 writeError(res, 400, "Cannot use ApiKey authorization over insecure connection.");

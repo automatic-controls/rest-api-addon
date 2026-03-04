@@ -14,3 +14,4 @@ openapi
 README.html
 **/*.view
 proxy
+changelog.txt

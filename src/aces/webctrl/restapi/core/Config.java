@@ -11,6 +11,7 @@ public class Config {
   /** The path to the saved data file. */
   private static volatile Path mainFile;
   public static volatile boolean verboseLogging = false;
+  public static volatile boolean permitInsecureConnections = false;
   private final static HashMap<String,ApiKey> keys = new HashMap<>(32);
   private final static ReentrantReadWriteLock keyLock = new ReentrantReadWriteLock();
   /**
@@ -96,7 +97,7 @@ public class Config {
   /**
    * @return a JSON array string containing information about all API keys.
    */
-  public static String listKeys(String operator){
+  public static String getJSON(String operator){
     final JSONArray arr = new JSONArray();
     keyLock.readLock().lock();
     try{
@@ -116,7 +117,10 @@ public class Config {
     }finally{
       keyLock.readLock().unlock();
     }
-    return arr.toString();
+    final JSONObject obj = new JSONObject();
+    obj.put("keys", arr);
+    obj.put("permitInsecureConnections", permitInsecureConnections);
+    return obj.toString();
   }
   /**
    * Load information from the saved data file.
@@ -146,6 +150,8 @@ public class Config {
         }finally{
           keyLock.writeLock().unlock();
         }
+        if (s.end()){ return true; }
+        permitInsecureConnections = s.readBoolean();
       }
       return true;
     }catch(Throwable t){
@@ -178,6 +184,7 @@ public class Config {
         }finally{
           keyLock.readLock().unlock();
         }
+        s.write(permitInsecureConnections);
         ByteBuffer buf = s.getBuffer();
         try(
           FileChannel out = FileChannel.open(mainFile, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);

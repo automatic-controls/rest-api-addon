@@ -56,7 +56,7 @@ class WebCTRLAPIClient {
       }
     }
   }
-  async sendRequest(endpoint, data) {
+  async sendRequest(endpoint, data, abortSignal=null) {
     endpoint = endpoint.replace(/\/+$/g, '').replace(/^\/+/g, '');
     if (!data){
       data = {};
@@ -64,12 +64,15 @@ class WebCTRLAPIClient {
     if (this.#dbid!==null && !('contextDBID' in data)){
       data['contextDBID'] = this.#dbid;
     }
-    let stat, ret;
+    let stat = 0, ret = null;
     for (let i=0;i<this.retryCount;++i){
+      if (abortSignal?.aborted){
+        break;
+      }
       let response;
       try {
         if (stat==429){
-          await WebCTRLAPIClient.#delay(this.retryDelay);
+          await WebCTRLAPIClient.#delay(this.retryDelay, abortSignal);
         }
         const { body, signature } = await this.#buildJWT(endpoint, data);
         let headers = {
@@ -81,11 +84,13 @@ class WebCTRLAPIClient {
         }else if (signature!==null){
           headers['Authorization'] = `Bearer ${signature}`;
         }
+        const timeoutSignal = AbortSignal.timeout(this.timeout);
+        const fetchSignal = abortSignal===null ? timeoutSignal : AbortSignal.any([abortSignal, timeoutSignal]);
         response = await fetch(`${this.#url}/${endpoint}`, {
           method: 'POST',
           headers: headers,
           body: body,
-          signal: AbortSignal.timeout(this.timeout)
+          signal: fetchSignal
         });
         ret = JSON.parse(await response.text(), (_k,v,ctx) => {
           if (typeof v==='number' && typeof ctx.source==='string' && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v)){
@@ -97,6 +102,10 @@ class WebCTRLAPIClient {
       } catch (error) {
         console.error(error);
         ret = null;
+        if (abortSignal?.aborted){
+          stat = 0;
+          break;
+        }
       }
       stat = (response?.status)??0;
       if (stat!=409 && stat!=429){
@@ -150,7 +159,25 @@ class WebCTRLAPIClient {
   static #base64URLEncode(str) {
     return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
-  static #delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  static #delay(ms, signal=null) {
+    return new Promise((resolve, reject) => {
+      const cleanup = () => {
+        signal?.removeEventListener('abort', onAbort);
+      };
+      const id = setTimeout(() => {
+        cleanup();
+        resolve();
+      }, ms);
+      const onAbort = () => {
+        clearTimeout(id);
+        cleanup();
+        reject(new DOMException('The operation was aborted.', 'AbortError'));
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
+      if (signal?.aborted){
+        onAbort();
+        return;
+      }
+    });
   }
 }
