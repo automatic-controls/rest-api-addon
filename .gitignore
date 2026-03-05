@@ -11,7 +11,7 @@ lib
 **/*.addon
 **/*.zip
 openapi
-README.html
+**/README.html
 **/*.view
 proxy
 changelog.txt

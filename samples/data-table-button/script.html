@@ -1,0 +1,153 @@
+<script src="/RestAPI/docs/api.js"></script>
+<script>
+  try {
+    const client = new WebCTRLAPIClient();
+    const configureFrame = function (iframeEl, successFn, errorFn) {
+      let done = false;
+      let onLoad = null;
+      const cleanup = () => {
+        if (onLoad) {
+          iframeEl.removeEventListener("load", onLoad);
+          onLoad = null;
+        }
+      };
+      const finishSuccess = () => {
+        if (done) return;
+        done = true;
+        cleanup();
+        try {
+          const iCon = iframeEl.contentWindow;
+          const iframeDoc = iframeEl.contentDocument || iCon.document;
+          if (!iframeDoc || !iframeDoc.documentElement) {
+            throw new Error("iframe inaccessible");
+          }
+          for (const e of iframeDoc.querySelectorAll('table.DataTable > tbody')) {
+            let ready = false;
+            new MutationObserver(function (mutationsList) {
+              for (const mutation of mutationsList) {
+                if (mutation.type === 'childList') {
+                  for (const node of mutation.removedNodes) {
+                    if (node.tagName === 'TR') {
+                      ready = true;
+                      break;
+                    }
+                  }
+                  if (ready) {
+                    for (const node of mutation.addedNodes) {
+                      if (node.tagName === 'TR') {
+                        ready = false;
+                        successFn(iframeDoc);
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+            }).observe(e, { childList: true });
+          }
+          successFn(iframeDoc);
+        } catch (e) {
+          errorFn(e);
+        }
+      };
+      const finishError = (e) => {
+        if (done) return;
+        done = true;
+        cleanup();
+        errorFn(e);
+      };
+      onLoad = () => {
+        try {
+          const iCon = iframeEl.contentWindow;
+          const src = (iframeEl.getAttribute("src") || "").trim();
+          const href = iCon.location.href;
+          const bl = "about:blank";
+          if (href !== bl || src === bl || src === "") {
+            finishSuccess();
+          }
+        } catch (e) {
+          finishError(e);
+        }
+      };
+      try {
+        iframeEl.addEventListener("load", onLoad);
+        const iCon = iframeEl.contentWindow;
+        const src = (iframeEl.getAttribute("src") || "").trim();
+        const href = iCon.location.href;
+        const ready = iCon.document.readyState === "complete";
+        const bl = "about:blank";
+        if (ready && (href !== bl || src === bl || src === "")) {
+          finishSuccess();
+        }
+      } catch (e) {
+        finishError(e);
+      }
+    };
+    document.addEventListener("DOMContentLoaded", () => {
+      for (const iframe of document.getElementsByTagName('IFRAME')) {
+        configureFrame(iframe, (doc) => {
+          for (const pre of doc.querySelectorAll('table.DataTable>tbody>tr>td>pre')) {
+            if (pre.innerText.startsWith('button:{')) {
+              try {
+                const data = JSON.parse(pre.innerText.substring(7), (_k, v, ctx) => {
+                  if (typeof v === 'number' && typeof ctx.source === 'string' && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v)) {
+                    return BigInt(ctx.source);
+                  } else {
+                    return v;
+                  }
+                });
+                const td = pre.parentElement;
+                const button = document.createElement('BUTTON');
+                button.innerText = data.text;
+                button.addEventListener('click', () => {
+                  const setOperations = Array.isArray(data.set)
+                    ? data.set.map((entry) => ({
+                      expression: entry.expr,
+                      value: entry.value
+                    }))
+                    : [];
+
+                  if (setOperations.length === 0) {
+                    return;
+                  }
+
+                  button.disabled = true;
+                  (async () => {
+                    try {
+                      const execResponse = await client.sendRequest('ExecGQL', {
+                        nodes: [data.dbid],
+                        set: setOperations,
+                        fieldAccess: true
+                      });
+
+                      if (!execResponse || execResponse.status !== 200) {
+                        console.log(execResponse);
+                        return;
+                      }
+
+                      if (
+                        execResponse.response &&
+                        Object.prototype.hasOwnProperty.call(execResponse.response, 'errors')
+                      ) {
+                        console.log(execResponse.response.errors);
+                      }
+                    } catch (e) {
+                      console.error(e);
+                    } finally {
+                      button.disabled = false;
+                    }
+                  })();
+                });
+                td.replaceChildren(button);
+              } catch (e) {
+                console.error(e);
+              }
+            }
+          }
+        }, console.error);
+      }
+    });
+  } catch (e) {
+    console.error(e);
+  }
+</script>

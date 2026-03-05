@@ -47,6 +47,7 @@ The add-on exposes the following endpoints:
 - [graphics-error-scraper](https://github.com/automatic-controls/graphics-error-scraper?tab=readme-ov-file#option-2-browser-based-tool) — Scan graphics for error messages.
 - [cp-property-import-export-addon](https://github.com/automatic-controls/cp-property-import-export-addon) — Export and import control program properties.
 - [global-modify-addon](https://github.com/automatic-controls/global-modify-addon) — Provides functionality similar to the native global modify.
+- [data-table-button](./samples/data-table-button) — Dynamically insert buttons into data tables reports within a graphic.
 
 ---
 
