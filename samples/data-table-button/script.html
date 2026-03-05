@@ -83,10 +83,12 @@
         finishError(e);
       }
     };
-    document.addEventListener("DOMContentLoaded", () => {
+    let added = false;
+    const func = () => {
       for (const iframe of document.getElementsByTagName('IFRAME')) {
         configureFrame(iframe, (doc) => {
           for (const pre of doc.querySelectorAll('table.DataTable>tbody>tr>td>pre')) {
+            added = true;
             if (pre.innerText.startsWith('button:{')) {
               try {
                 const data = JSON.parse(pre.innerText.substring(7), (_k, v, ctx) => {
@@ -146,7 +148,11 @@
           }
         }, console.error);
       }
-    });
+      if (!added) {
+        setTimeout(func, 1000);
+      }
+    };
+    func();
   } catch (e) {
     console.error(e);
   }
