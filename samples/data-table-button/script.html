@@ -2,7 +2,69 @@
 <script>
   try {
     const client = new WebCTRLAPIClient();
+    const configuredFrames = new WeakSet();
+    const processedRows = new WeakSet();
+    const onFrameRow = (_doc, tr) => {
+      for (const pre of tr.querySelectorAll('td>pre')) {
+        if (pre.innerText?.startsWith('button:{')) {
+          try {
+            const data = JSON.parse(pre.innerText.substring(7), (_k, v, ctx) => {
+              if (typeof v === 'number' && ctx && typeof ctx.source === 'string' && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v)) {
+                return BigInt(ctx.source);
+              } else {
+                return v;
+              }
+            });
+            const td = pre.parentElement;
+            const button = document.createElement('BUTTON');
+            button.innerText = data.text;
+            button.addEventListener('click', () => {
+              const setOperations = Array.isArray(data.set)
+                ? data.set.map((entry) => ({
+                  expression: entry.expr,
+                  value: entry.value
+                }))
+                : [];
+              if (setOperations.length === 0) {
+                return;
+              }
+              button.disabled = true;
+              (async () => {
+                try {
+                  const execResponse = await client.sendRequest('ExecGQL', {
+                    nodes: [data.dbid],
+                    set: setOperations,
+                    fieldAccess: true
+                  });
+                  if (!execResponse || execResponse.status !== 200) {
+                    console.log(execResponse);
+                    return;
+                  }
+                  if (
+                    execResponse.response &&
+                    Object.prototype.hasOwnProperty.call(execResponse.response, 'errors')
+                  ) {
+                    console.log(execResponse.response.errors);
+                  }
+                } catch (e) {
+                  console.error(e);
+                } finally {
+                  button.disabled = false;
+                }
+              })();
+            });
+            td.replaceChildren(button);
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    };
     const configureFrame = function (iframeEl, successFn, errorFn) {
+      if (!iframeEl || configuredFrames.has(iframeEl)) {
+        return;
+      }
+      configuredFrames.add(iframeEl);
       let done = false;
       let onLoad = null;
       const cleanup = () => {
@@ -21,31 +83,39 @@
           if (!iframeDoc || !iframeDoc.documentElement) {
             throw new Error("iframe inaccessible");
           }
-          for (const e of iframeDoc.querySelectorAll('table.DataTable > tbody')) {
-            let ready = false;
+          if (iframeEl.getAttribute("src")?.includes('datatable.html')) {
+            const emitRow = (tr) => {
+              if (!tr || processedRows.has(tr)) {
+                return;
+              }
+              processedRows.add(tr);
+              successFn(iframeDoc, tr);
+            };
+            const processAddedRows = (rootNode) => {
+              if (!rootNode || rootNode.nodeType !== Node.ELEMENT_NODE) {
+                return;
+              }
+              const rootEl = rootNode;
+              if (rootEl.tagName === 'TR') {
+                emitRow(rootEl);
+              }
+              for (const tr of rootEl.querySelectorAll?.('tr') || []) {
+                emitRow(tr);
+              }
+            };
             new MutationObserver(function (mutationsList) {
               for (const mutation of mutationsList) {
-                if (mutation.type === 'childList') {
-                  for (const node of mutation.removedNodes) {
-                    if (node.tagName === 'TR') {
-                      ready = true;
-                      break;
-                    }
-                  }
-                  if (ready) {
-                    for (const node of mutation.addedNodes) {
-                      if (node.tagName === 'TR') {
-                        ready = false;
-                        successFn(iframeDoc);
-                        break;
-                      }
-                    }
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                  for (const node of mutation.addedNodes) {
+                    processAddedRows(node);
                   }
                 }
               }
-            }).observe(e, { childList: true });
+            }).observe(iframeDoc.documentElement, { childList: true, subtree: true });
+            for (const tr of iframeDoc.querySelectorAll('tr')) {
+              emitRow(tr);
+            }
           }
-          successFn(iframeDoc);
         } catch (e) {
           errorFn(e);
         }
@@ -83,76 +153,35 @@
         finishError(e);
       }
     };
-    let added = false;
-    const func = () => {
+    const configureAllFrames = () => {
       for (const iframe of document.getElementsByTagName('IFRAME')) {
-        configureFrame(iframe, (doc) => {
-          for (const pre of doc.querySelectorAll('table.DataTable>tbody>tr>td>pre')) {
-            added = true;
-            if (pre.innerText.startsWith('button:{')) {
-              try {
-                const data = JSON.parse(pre.innerText.substring(7), (_k, v, ctx) => {
-                  if (typeof v === 'number' && typeof ctx.source === 'string' && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v)) {
-                    return BigInt(ctx.source);
-                  } else {
-                    return v;
-                  }
-                });
-                const td = pre.parentElement;
-                const button = document.createElement('BUTTON');
-                button.innerText = data.text;
-                button.addEventListener('click', () => {
-                  const setOperations = Array.isArray(data.set)
-                    ? data.set.map((entry) => ({
-                      expression: entry.expr,
-                      value: entry.value
-                    }))
-                    : [];
-
-                  if (setOperations.length === 0) {
-                    return;
-                  }
-
-                  button.disabled = true;
-                  (async () => {
-                    try {
-                      const execResponse = await client.sendRequest('ExecGQL', {
-                        nodes: [data.dbid],
-                        set: setOperations,
-                        fieldAccess: true
-                      });
-
-                      if (!execResponse || execResponse.status !== 200) {
-                        console.log(execResponse);
-                        return;
-                      }
-
-                      if (
-                        execResponse.response &&
-                        Object.prototype.hasOwnProperty.call(execResponse.response, 'errors')
-                      ) {
-                        console.log(execResponse.response.errors);
-                      }
-                    } catch (e) {
-                      console.error(e);
-                    } finally {
-                      button.disabled = false;
-                    }
-                  })();
-                });
-                td.replaceChildren(button);
-              } catch (e) {
-                console.error(e);
-              }
-            }
-          }
-        }, console.error);
-      }
-      if (!added) {
-        setTimeout(func, 1000);
+        configureFrame(iframe, onFrameRow, console.error);
       }
     };
-    func();
+    new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+        if (mutation.type !== 'childList' || mutation.addedNodes.length === 0) {
+          continue;
+        }
+        for (const node of mutation.addedNodes) {
+          if (!node || node.nodeType !== Node.ELEMENT_NODE) {
+            continue;
+          }
+          const el = node;
+          if (el.tagName === 'IFRAME') {
+            configureFrame(el, onFrameRow, console.error);
+          }
+          for (const iframe of el.querySelectorAll?.('iframe') || []) {
+            configureFrame(iframe, onFrameRow, console.error);
+          }
+        }
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', configureAllFrames, { once: true });
+    } else {
+      configureAllFrames();
+    }
   } catch (e) {
     console.error(e);
   }
