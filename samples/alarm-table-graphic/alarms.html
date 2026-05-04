@@ -1,0 +1,790 @@
+<style>
+  .alm-api-widget {
+    --bg-0: #0f141c;
+    --bg-1: #161d28;
+    --bg-2: #1e2835;
+    --line: #2f3f55;
+    --line-soft: #243246;
+    --text: #e7eef8;
+    --text-soft: #9fb2ca;
+    --accent: #59d0ff;
+    --ok: #37c788;
+    --warn: #f8be5b;
+    --danger: #f77777;
+    --shadow: rgba(0, 0, 0, 0.35);
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: var(--text);
+    font-family: "Segoe UI", "Trebuchet MS", Tahoma, sans-serif;
+    background:
+      radial-gradient(1200px 480px at 20% -20%, rgba(89, 208, 255, 0.14), transparent 60%),
+      radial-gradient(900px 500px at 90% 120%, rgba(86, 229, 166, 0.08), transparent 65%),
+      linear-gradient(170deg, var(--bg-0), var(--bg-1) 48%, var(--bg-2));
+    border: 1px solid var(--line-soft);
+    border-radius: 12px;
+    box-shadow: 0 12px 28px var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    overflow: hidden;
+  }
+
+  .alm-api-widget * {
+    box-sizing: border-box;
+  }
+
+  .alm-api-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line-soft);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+  }
+
+  .alm-api-title {
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #d8e8fb;
+  }
+
+  .alm-api-status {
+    font-size: 12px;
+    color: var(--text-soft);
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
+  }
+
+  .alm-api-table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .alm-api-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: auto;
+  }
+
+  .alm-api-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #bed3ea;
+    background: #1b2635;
+    border-bottom: 1px solid var(--line);
+    border-right: 1px solid var(--line-soft);
+    padding: 10px 10px;
+    white-space: nowrap;
+  }
+
+  .alm-api-table thead th:last-child {
+    border-right: 0;
+  }
+
+  .alm-api-table tbody td {
+    border-bottom: 1px solid var(--line-soft);
+    border-right: 1px solid rgba(47, 63, 85, 0.55);
+    padding: 9px 10px;
+    font-size: 13px;
+    vertical-align: middle;
+    color: #deebfb;
+  }
+
+  .alm-api-table tbody td:last-child {
+    border-right: 0;
+  }
+
+  .alm-api-table tbody tr:nth-child(odd) {
+    background: rgba(13, 22, 33, 0.36);
+  }
+
+  .alm-api-table tbody tr:nth-child(even) {
+    background: rgba(20, 30, 43, 0.42);
+  }
+
+  .alm-api-table tbody tr:hover {
+    background: rgba(44, 64, 90, 0.35);
+  }
+
+  .alm-api-empty,
+  .alm-api-error,
+  .alm-api-loading {
+    display: grid;
+    place-items: center;
+    min-height: 100%;
+    font-size: 14px;
+    color: var(--text-soft);
+    padding: 18px;
+    text-align: center;
+  }
+
+  .alm-api-error {
+    color: #ffd4d4;
+    background: linear-gradient(180deg, rgba(247, 119, 119, 0.14), transparent);
+  }
+
+  .alm-api-col-icon {
+    width: 56px;
+    text-align: center;
+  }
+
+  .alm-api-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.14));
+  }
+
+  .alm-api-icon-placeholder {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin: 0 auto;
+    background: linear-gradient(180deg, var(--warn), #ca8e2a);
+    box-shadow: 0 0 0 3px rgba(248, 190, 91, 0.18);
+  }
+
+  .alm-api-location-link {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px dotted rgba(89, 208, 255, 0.45);
+  }
+
+  .alm-api-location-link:hover {
+    color: #8ee0ff;
+    border-bottom-color: rgba(142, 224, 255, 0.75);
+  }
+
+  .alm-api-datetime {
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  .alm-api-datetime .d {
+    display: block;
+    color: #d7e6f6;
+  }
+
+  .alm-api-datetime .t {
+    display: block;
+    color: #8fb0cc;
+    font-size: 12px;
+  }
+
+  .alm-api-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid #6d819b;
+    background: #0f1a27;
+    display: inline-grid;
+    place-items: center;
+    pointer-events: none;
+    margin: 0;
+    vertical-align: middle;
+  }
+
+  .alm-api-checkbox::after {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1px rgba(168, 188, 210, 0.2);
+  }
+
+  .alm-api-checkbox:checked {
+    border-color: #58d49d;
+    background: #10281f;
+    box-shadow: 0 0 0 3px rgba(55, 199, 136, 0.18);
+  }
+
+  .alm-api-checkbox:checked::after {
+    background: linear-gradient(180deg, #6ff0b6, #2a9f6d);
+    box-shadow: none;
+  }
+
+  .alm-api-text-soft {
+    color: var(--text-soft);
+  }
+</style>
+<div style="width:98%;height:98%"></div>
+<script src="/RestAPI/docs/api.js"></script>
+<script>
+  (async () => {
+    const client = new WebCTRLAPIClient();
+    const maxLoad = 1000;
+    const pageSize = 50;
+    const maxPages = Math.ceil(maxLoad / pageSize);
+    const requestTimeoutMs = 15000;
+    const maxRetries = 2;
+    const retryableStatuses = new Set([429, 500, 502, 503, 504]);
+    const columns = [
+      "icon",
+      "location",
+      "shortText",
+      //"longText",
+      "generationTime",
+      "receiptTime",
+      //"canBeAcknowledged",
+      "acknowledged",
+      //"canForceToNormal",
+      "alarmCategory",
+      //"fromState",
+      //"toState",
+      //"isReturnedToNormal",
+      "isCritical",
+      //"closed"
+    ];
+    let filter = {
+      "atLocationOnly": false,
+      "orderbyReceiptDate": true,
+      "location": null,
+      "includeCategories": null,
+      "excludeCategories": null,
+      "fromStates": null,
+      "toStates": null,
+      "byAcknowledgePending": null,
+      "byAcknowledged": null,
+      "byReturnToNormalPending": true,
+      "byClosed": null,
+      "isCritical": null
+    };
+
+    const findHostElement = () => {
+      const scriptEl = document.currentScript;
+      if (!scriptEl) {
+        return null;
+      }
+
+      let node = scriptEl.previousElementSibling;
+      while (node) {
+        if (node.tagName === "DIV") {
+          return node;
+        }
+        node = node.previousElementSibling;
+      }
+      return null;
+    };
+
+    const host = findHostElement();
+    if (!(host instanceof HTMLElement)) {
+      return;
+    }
+
+    const COLUMN_DEFS = {
+      icon: { title: "Icon" },
+      location: { title: "Location" },
+      shortText: { title: "Summary" },
+      longText: { title: "Details" },
+      generationTime: { title: "Generated" },
+      receiptTime: { title: "Received" },
+      canBeAcknowledged: { title: "Ack Allowed" },
+      acknowledged: { title: "Acknowledged" },
+      canForceToNormal: { title: "Force To Normal" },
+      alarmCategory: { title: "Category" },
+      fromState: { title: "From State" },
+      toState: { title: "To State" },
+      isReturnedToNormal: { title: "Returned" },
+      isCritical: { title: "Critical" },
+      closed: { title: "Closed" }
+    };
+
+    const visibleColumns = columns.filter((key) => Object.prototype.hasOwnProperty.call(COLUMN_DEFS, key));
+
+    const logPrefix = "[alm-api]";
+    const logInfo = (message, data) => {
+      if (data) {
+        console.info(logPrefix, message, data);
+      } else {
+        console.info(logPrefix, message);
+      }
+    };
+    const logWarn = (message, data) => {
+      if (data) {
+        console.warn(logPrefix, message, data);
+      } else {
+        console.warn(logPrefix, message);
+      }
+    };
+    const logError = (message, data) => {
+      if (data) {
+        console.error(logPrefix, message, data);
+      } else {
+        console.error(logPrefix, message);
+      }
+    };
+
+    const escapeHtml = (value) => String(value == null ? "" : value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#39;");
+
+    const escapeJsDoubleQuoted = (value) => String(value == null ? "" : value)
+      .replaceAll("\\", "\\\\")
+      .replaceAll('"', '\\"');
+
+    const parseDateSafe = (raw) => {
+      if (!raw) {
+        return null;
+      }
+      const parsed = new Date(raw);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const sleep = (ms) => new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+
+    const withTimeout = async (url, options, timeoutMs) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        return await fetch(url, { ...options, signal: controller.signal });
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    const parseBodySafe = async (response) => {
+      const text = await response.text();
+      if (!text) {
+        return { text: "", json: null };
+      }
+      try {
+        return { text, json: JSON.parse(text) };
+      } catch (_) {
+        return { text, json: null };
+      }
+    };
+
+    const shouldRetryError = (error, attempt) => {
+      if (attempt > maxRetries) {
+        return false;
+      }
+      if (error && error.retryable === false) {
+        return false;
+      }
+      if (error && error.name === "AbortError") {
+        return true;
+      }
+      if (error && typeof error.status === "number") {
+        return retryableStatuses.has(error.status);
+      }
+      return true;
+    };
+
+    const sanitizeFilterForLog = (value) => ({
+      location: value ? value.location : null,
+      nextPageId: value ? value.nextPageId : null,
+      previousPageId: value ? value.previousPageId : null,
+      byReturnToNormalPending: value ? value.byReturnToNormalPending : null,
+      isCritical: value ? value.isCritical : null
+    });
+
+    const nextSignature = (value) => JSON.stringify({
+      location: value ? value.location : null,
+      nextPageId: value ? value.nextPageId : null,
+      previousPageId: value ? value.previousPageId : null,
+      fromAlarm: value ? value.fromAlarm : null,
+      toAlarm: value ? value.toAlarm : null,
+      fromDate: value ? value.fromDate : null,
+      toDate: value ? value.toDate : null
+    });
+
+    const toUserMessage = (error) => {
+      if (!error) {
+        return "Unexpected error while loading alarms.";
+      }
+      if (error.name === "AbortError") {
+        return "Request timed out after " + requestTimeoutMs + "ms while loading alarms.";
+      }
+      if (error.status === 401 || error.status === 403) {
+        return "Alarm service request was denied. Verify your current session has access to alarm data.";
+      }
+      if (error.status === 404) {
+        return "Alarm endpoint not found at the expected path.";
+      }
+      if (error.status) {
+        return "Alarm query failed with status " + error.status + ".";
+      }
+      if (error.code && String(error.code) !== "200") {
+        return "Alarm query failed with code " + error.code + ".";
+      }
+      return error.message || "Unexpected error while loading alarms.";
+    };
+
+    const formatDateTime = (raw) => {
+      const date = parseDateSafe(raw);
+      if (!date) {
+        return '<span class="alm-api-text-soft">' + escapeHtml(raw || "") + "</span>";
+      }
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, "0");
+      const dd = String(date.getDate()).padStart(2, "0");
+      const h24 = date.getHours();
+      const h12 = String(((h24 + 11) % 12) + 1).padStart(2, "0");
+      const mi = String(date.getMinutes()).padStart(2, "0");
+      const ss = String(date.getSeconds()).padStart(2, "0");
+      const ampm = h24 >= 12 ? "PM" : "AM";
+      return '<span class="alm-api-datetime"><span class="d">'
+        + yyyy + "-" + mm + "-" + dd
+        + '</span><span class="t">'
+        + h12 + ":" + mi + ":" + ss + ampm
+        + "</span></span>";
+    };
+
+    const setShell = () => {
+      host.innerHTML = [
+        '<section class="alm-api-widget">',
+        '  <div class="alm-api-toolbar">',
+        '    <h2 class="alm-api-title">Alarm Activity</h2>',
+        '    <div class="alm-api-status" data-role="status">Preparing request...</div>',
+        '  </div>',
+        '  <div class="alm-api-table-wrap" data-role="body">',
+        '    <div class="alm-api-loading">Loading alarms...</div>',
+        '  </div>',
+        '</section>'
+      ].join("");
+    };
+
+    const statusEl = () => host.querySelector('[data-role="status"]');
+    const bodyEl = () => host.querySelector('[data-role="body"]');
+
+    const updateStatus = (text) => {
+      const node = statusEl();
+      if (node) {
+        node.textContent = text;
+      }
+    };
+
+    const renderError = (message) => {
+      const body = bodyEl();
+      if (body) {
+        body.innerHTML = '<div class="alm-api-error">' + escapeHtml(message) + "</div>";
+      }
+    };
+
+    const renderEmpty = () => {
+      const body = bodyEl();
+      if (body) {
+        body.innerHTML = '<div class="alm-api-empty">No alarms match the current filter.</div>';
+      }
+    };
+
+    const resolveCurrentLocation = async () => {
+      try {
+        const resolve = await client.sendRequest("ResolveGQL", { "expression": [".absolute-path"] });
+        const location = resolve && resolve.response && resolve.response.expr1;
+        if (!location) {
+          const error = new Error("Could not resolve current location path from ResolveGQL response.");
+          error.context = {
+            status: resolve ? resolve.status : null,
+            responseKeys: resolve && resolve.response ? Object.keys(resolve.response) : []
+          };
+          throw error;
+        }
+        logInfo("Resolved current location", { location });
+        return location;
+      } catch (error) {
+        logError("ResolveGQL request failed", {
+          message: error && error.message ? error.message : String(error),
+          context: error && error.context ? error.context : null
+        });
+        throw error;
+      }
+    };
+
+    const queryAlarmsPage = async (currentFilter, pageNumber) => {
+      const url = "/_alarm_serviceprovider/api/v1/alarm/query?limit=" + encodeURIComponent(pageSize);
+      for (let attempt = 1; attempt <= maxRetries + 1; attempt += 1) {
+        try {
+          logInfo("Requesting alarm page", {
+            page: pageNumber,
+            attempt,
+            limit: pageSize,
+            filter: sanitizeFilterForLog(currentFilter)
+          });
+
+          const response = await withTimeout(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify(currentFilter)
+          }, requestTimeoutMs);
+
+          const body = await parseBodySafe(response);
+
+          if (!response.ok) {
+            const error = new Error("Alarm query failed (" + response.status + ") on page " + pageNumber + ", attempt " + attempt + ".");
+            error.status = response.status;
+            error.page = pageNumber;
+            error.attempt = attempt;
+            error.url = url;
+            error.responseBody = body.text;
+
+            const canRetry = retryableStatuses.has(response.status) && attempt <= maxRetries;
+            logWarn("Alarm page request returned non-2xx", {
+              page: pageNumber,
+              attempt,
+              status: response.status,
+              retrying: canRetry,
+              responseSnippet: body.text ? body.text.slice(0, 500) : ""
+            });
+
+            if (canRetry) {
+              await sleep(attempt * 300);
+              continue;
+            }
+            throw error;
+          }
+
+          if (!body.json || typeof body.json !== "object") {
+            const error = new Error("Alarm query returned non-JSON payload on page " + pageNumber + ", attempt " + attempt + ".");
+            error.page = pageNumber;
+            error.attempt = attempt;
+            error.url = url;
+            error.responseBody = body.text;
+            error.retryable = false;
+            logWarn("Alarm page request returned invalid JSON body", {
+              page: pageNumber,
+              attempt,
+              responseSnippet: body.text ? body.text.slice(0, 500) : ""
+            });
+            throw error;
+          }
+
+          const success = body.json.success;
+          const code = body.json.code;
+          if ((typeof success === "boolean" && !success) || (code != null && String(code) !== "200")) {
+            const messages = Array.isArray(body.json.messages) ? body.json.messages : [];
+            const error = new Error("Alarm query returned application failure on page " + pageNumber + ", attempt " + attempt + ".");
+            error.page = pageNumber;
+            error.attempt = attempt;
+            error.url = url;
+            error.code = code;
+            error.messages = messages;
+            error.responseBody = body.text;
+            error.retryable = false;
+            logWarn("Alarm page request returned API-level failure", {
+              page: pageNumber,
+              attempt,
+              code,
+              success,
+              messages: messages.slice(0, 5)
+            });
+            throw error;
+          }
+
+          const payloadCount = body.json && body.json.payload && Array.isArray(body.json.payload.alarms)
+            ? body.json.payload.alarms.length
+            : 0;
+
+          logInfo("Alarm page request succeeded", {
+            page: pageNumber,
+            attempt,
+            alarmCount: payloadCount,
+            hasNext: Boolean(body.json && body.json.payload && body.json.payload.next)
+          });
+
+          return body.json || {};
+        } catch (error) {
+          const timedOut = error && error.name === "AbortError";
+          const shouldRetry = shouldRetryError(error, attempt);
+          if (shouldRetry) {
+            logWarn("Alarm page request failed and will retry", {
+              page: pageNumber,
+              attempt,
+              timedOut,
+              message: error && error.message ? error.message : String(error)
+            });
+            await sleep(attempt * 300);
+            continue;
+          }
+          throw error;
+        }
+      }
+
+      throw new Error("Alarm query exhausted retries for page " + pageNumber + ".");
+    };
+
+    const loadAllAlarms = async (baseFilter) => {
+      let currentFilter = baseFilter;
+      const allAlarms = [];
+      let pagesLoaded = 0;
+      const seenNextSignatures = new Set();
+
+      seenNextSignatures.add(nextSignature(baseFilter));
+
+      for (let page = 0; page < maxPages; page += 1) {
+        updateStatus("Loading page " + (page + 1) + " of up to " + maxPages + "...");
+        const data = await queryAlarmsPage(currentFilter, page + 1);
+        const payload = data && data.payload ? data.payload : {};
+        const alarms = Array.isArray(payload.alarms) ? payload.alarms : [];
+        const remaining = Math.max(0, maxLoad - allAlarms.length);
+        if (remaining > 0 && alarms.length) {
+          allAlarms.push(...alarms.slice(0, remaining));
+        }
+        pagesLoaded += 1;
+
+        if (!payload.next) {
+          return { allAlarms, pagesLoaded, truncated: false };
+        }
+
+        const signature = nextSignature(payload.next);
+        if (seenNextSignatures.has(signature)) {
+          logWarn("Stopping pagination due to repeated next-filter signature", {
+            page: page + 1,
+            nextPageId: payload.next.nextPageId || null
+          });
+          return { allAlarms, pagesLoaded, truncated: true };
+        }
+        seenNextSignatures.add(signature);
+
+        if (allAlarms.length >= maxLoad) {
+          logInfo("Reached maxLoad while paginating alarms", {
+            page: page + 1,
+            maxLoad
+          });
+          return { allAlarms, pagesLoaded, truncated: true };
+        }
+
+        currentFilter = payload.next;
+      }
+
+      return { allAlarms, pagesLoaded, truncated: true };
+    };
+
+    const renderCell = (alarm, key) => {
+      switch (key) {
+        case "icon": {
+          const src = alarm && alarm.alarmCategory && alarm.alarmCategory.iconImagePath;
+          const name = alarm && alarm.alarmCategory && alarm.alarmCategory.categoryName;
+          if (src) {
+            return '<img class="alm-api-icon" src="' + escapeHtml(src) + '" alt="' + escapeHtml(name || "alarm") + '">';
+          }
+          return '<div class="alm-api-icon-placeholder" aria-hidden="true"></div>';
+        }
+        case "location": {
+          const location = alarm && alarm.location ? alarm.location : "";
+          const jsLocation = escapeJsDoubleQuoted(location);
+          const href = 'javascript:main.jumpToTreeLocation("' + jsLocation + '", "properties", null, null, null)';
+          return '<a class="alm-api-location-link" href="' + escapeHtml(href) + '">' + escapeHtml(location) + "</a>";
+        }
+        case "alarmCategory": {
+          const name = alarm && alarm.alarmCategory && alarm.alarmCategory.categoryName;
+          return escapeHtml(name || "");
+        }
+        case "generationTime":
+        case "receiptTime":
+          return formatDateTime(alarm ? alarm[key] : "");
+        case "canBeAcknowledged":
+        case "acknowledged":
+        case "canForceToNormal":
+        case "isReturnedToNormal":
+        case "isCritical":
+        case "closed": {
+          const checked = Boolean(alarm && alarm[key]);
+          return '<input class="alm-api-checkbox" type="checkbox" disabled '
+            + (checked ? "checked" : "")
+            + ' aria-label="'
+            + (checked ? "true" : "false")
+            + '">';
+        }
+        default:
+          return escapeHtml(alarm && alarm[key] != null ? alarm[key] : "");
+      }
+    };
+
+    const renderTable = (alarms) => {
+      const body = bodyEl();
+      if (!body) {
+        return;
+      }
+      if (!alarms.length) {
+        renderEmpty();
+        return;
+      }
+
+      const head = visibleColumns
+        .map((key) => {
+          const iconClass = key === "icon" ? " alm-api-col-icon" : "";
+          return '<th class="alm-api-col-' + escapeHtml(key) + iconClass + '">' + escapeHtml(COLUMN_DEFS[key].title) + "</th>";
+        })
+        .join("");
+
+      const rows = alarms
+        .map((alarm) => {
+          const cells = visibleColumns
+            .map((key) => '<td class="alm-api-col-' + escapeHtml(key) + '">' + renderCell(alarm, key) + "</td>")
+            .join("");
+          return "<tr>" + cells + "</tr>";
+        })
+        .join("");
+
+      body.innerHTML = '<table class="alm-api-table"><thead><tr>' + head + "</tr></thead><tbody>" + rows + "</tbody></table>";
+    };
+
+    try {
+      setShell();
+
+      updateStatus("Resolving current location...");
+      const location = await resolveCurrentLocation();
+      filter.location = location;
+
+      const result = await loadAllAlarms(filter);
+      const alarms = result.allAlarms;
+
+      alarms.sort((a, b) => {
+        const at = parseDateSafe(a && a.receiptTime);
+        const bt = parseDateSafe(b && b.receiptTime);
+        const av = at ? at.getTime() : Number.NEGATIVE_INFINITY;
+        const bv = bt ? bt.getTime() : Number.NEGATIVE_INFINITY;
+        return bv - av;
+      });
+
+      renderTable(alarms);
+
+      const truncation = result.truncated ? " (truncated at max pages)" : "";
+      //updateStatus(alarms.length + " alarm(s) loaded from " + result.pagesLoaded + " page(s)" + truncation);
+      updateStatus(alarms.length + " alarm(s) loaded" + truncation);
+      logInfo("Alarm table render complete", {
+        alarmCount: alarms.length,
+        pagesLoaded: result.pagesLoaded,
+        truncated: result.truncated
+      });
+    } catch (error) {
+      const message = toUserMessage(error);
+      updateStatus("Load failed");
+      renderError(message);
+      logError("Alarm widget failed", {
+        message: error && error.message ? error.message : String(error),
+        status: error && error.status ? error.status : null,
+        page: error && error.page ? error.page : null,
+        attempt: error && error.attempt ? error.attempt : null,
+        responseSnippet: error && error.responseBody ? String(error.responseBody).slice(0, 700) : null,
+        stack: error && error.stack ? error.stack : null
+      });
+    }
+  })();
+</script>
