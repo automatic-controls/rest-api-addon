@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "UpdateScheduleGroup",
+  "description": "Update or read members of a schedule group.",
+  "type": "object",
+  "properties": {
+    "group": {
+      "type": "string",
+      "description": "The reference name of the schedule group to update. (Case-insensitive)",
+      "minLength": 1
+    },
+    "members": {
+      "type": "array",
+      "description": "A list of GQL paths or DBIDs that specify members of the schedule group. Accepted node types are BEQU, AREA, GROUP, and HSGROUP.",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "description": "A GQL path.",
+            "minLength": 1
+          },
+          {
+            "type": "integer",
+            "description": "A DBID."
+          }
+        ]
+      },
+      "uniqueItems": true
+    },
+    "action": {
+      "type": "string",
+      "description": "The action to perform on the schedule group members. 'ADD' will add specified members to the existing group if they are not already present. 'REMOVE' will remove specified members from the group if they are present. 'REPLACE' will replace all existing members. 'READ' will read the current members of the group without making any changes. 'READ_ALL' is similar to 'READ' but recurses into nested schedule groups.",
+      "enum": ["ADD", "REMOVE", "REPLACE", "READ", "READ_ALL"],
+      "default": "READ"
+    },
+    "download": {
+      "type": "boolean",
+      "description": "If true, the server will attempt to asynchronously download modified schedules to all affected programs. If false, a suspended download task will be created for each affected program, which can be manually initiated at a later time.",
+      "default": false
+    },
+    "contextDBID": {
+      "type": "integer",
+      "description": "If provided, this DBID will be used as the session's context for resolving relative paths."
+    }
+  },
+  "required":[
+    "group"
+  ],
+  "additionalProperties": false
+}

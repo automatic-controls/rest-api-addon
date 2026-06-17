@@ -32,6 +32,7 @@ The add-on exposes the following endpoints:
 - `CreateOperator` — Creates or updates an operator.
 - `DeleteOperator` — Deletes an operator from the system.
 - `GetTrendData` — Retrieves trend data for one or many sources over a specified time range.
+- `UpdateScheduleGroup` — Update or read members of a schedule group.
 
 ---
 
@@ -55,6 +56,6 @@ The add-on exposes the following endpoints:
 
 This add-on uses the following third-party libraries:
 
-- [fastjson2](https://github.com/alibaba/fastjson2) v2.0.60 — High-performance JSON parser and serializer for Java.
+- [fastjson2](https://github.com/alibaba/fastjson2) v2.0.61 — High-performance JSON parser and serializer for Java.
 - [fontawesome](https://fontawesome.com/) v6.7.2 — Icon toolkit for scalable vector icons.
 - [highlight.js](https://highlightjs.org/) v11.11.1 — Syntax highlighting for code blocks in documentation.

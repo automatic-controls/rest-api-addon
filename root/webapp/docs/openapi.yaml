@@ -50,6 +50,8 @@ tags:
     description: Operator management
   - name: Trends
     description: Historical trend data retrieval
+  - name: Schedules
+    description: Schedule group membership operations
 
 security:
   - ApiKeyAuth: []
@@ -411,6 +413,79 @@ paths:
                         value: 72.1
                       - timestamp: 1706140860000
                         value: 72.3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /UpdateScheduleGroup:
+    post:
+      tags:
+        - Schedules
+      summary: Update or read schedule group members
+      description: |
+        Updates or reads members of a schedule group by reference name. Use `READ` or `READ_ALL`
+        to fetch current members without making changes. Use `ADD`, `REMOVE`, or `REPLACE` to
+        modify members. Accepted member node types are `BEQU`, `AREA`, `GROUP`, and `HSGROUP`.
+      operationId: updateScheduleGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateScheduleGroupRequest'
+            examples:
+              readMembers:
+                summary: Read direct members
+                value:
+                  group: occupied_weekday
+                  action: READ
+              replaceMembers:
+                summary: Replace members and start downloads
+                value:
+                  group: occupied_weekday
+                  action: REPLACE
+                  members:
+                    - /area1/equipment1
+                    - 12345
+                  download: true
+      responses:
+        '200':
+          description: Schedule group operation completed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  changes:
+                    type: integer
+                    description: Number of changed members for mutating actions (or 0 for reads)
+                  members:
+                    type: array
+                    description: Returned for READ/READ_ALL actions
+                    items:
+                      type: integer
+                  errors:
+                    type: array
+                    items:
+                      type: string
+              examples:
+                readResponse:
+                  value:
+                    changes: 0
+                    members:
+                      - 12345
+                      - 67890
+                updateResponse:
+                  value:
+                    changes: 2
+                partialFailureResponse:
+                  value:
+                    changes: 1
+                    errors:
+                      - Some members (1) could not be resolved (e.g, permissions issues or invalid node types).
         '400':
           $ref: '#/components/responses/BadRequest'
         '403':
@@ -815,6 +890,43 @@ components:
         contextDBID:
           type: integer
           description: DBID for resolving GQL paths in the sources property
+      additionalProperties: false
+
+    UpdateScheduleGroupRequest:
+      type: object
+      required:
+        - group
+      properties:
+        group:
+          type: string
+          description: The reference name of the schedule group to update (case-insensitive)
+          minLength: 1
+        members:
+          type: array
+          description: List of GQL paths or DBIDs that specify schedule group members
+          items:
+            oneOf:
+              - type: string
+                minLength: 1
+              - type: integer
+          uniqueItems: true
+        action:
+          type: string
+          description: Action to perform on group members
+          enum:
+            - ADD
+            - REMOVE
+            - REPLACE
+            - READ
+            - READ_ALL
+          default: READ
+        download:
+          type: boolean
+          description: If true, asynchronously downloads modified schedules to affected programs
+          default: false
+        contextDBID:
+          type: integer
+          description: DBID to use as the session context for resolving relative paths
       additionalProperties: false
 
     Error:

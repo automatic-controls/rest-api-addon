@@ -61,7 +61,7 @@
           requestBtn.dataset.requestData = typeof data === 'object' ? stringifyWithBigInts(data) : String(data);
           requestBtn.style.display = 'inline-block';
         }
-        
+
         apiResult.style.display = 'none';
         apiResultCode.innerHTML = '';
         loadingSpinner.style.display = 'inline-block';
@@ -84,11 +84,11 @@
         }
       });
     }
-    
+
     function viewRequestData(endpoint) {
       const requestBtn = document.getElementById(endpoint + '-view-request-btn');
       if (!requestBtn || !requestBtn.dataset.requestData) return;
-      
+
       const requestData = requestBtn.dataset.requestData;
       const modal = document.createElement('div');
       modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
@@ -108,17 +108,17 @@
         </div>
       `;
       document.body.appendChild(modal);
-      
+
       // Add event listeners
       const closeBtn = modal.querySelector('#request-modal-close');
       const closeBottomBtn = modal.querySelector('#request-modal-close-bottom');
       const copyBtn = modal.querySelector('#request-modal-copy');
-      
+
       const closeModal = () => modal.remove();
-      
+
       closeBtn.addEventListener('click', closeModal);
       closeBottomBtn.addEventListener('click', closeModal);
-      
+
       copyBtn.addEventListener('click', async () => {
         try {
           await navigator.clipboard.writeText(requestData);
@@ -133,11 +133,11 @@
           }, 1400);
         }
       });
-      
-      modal.addEventListener('click', function(e) {
+
+      modal.addEventListener('click', function (e) {
         if (e.target === modal) closeModal();
       });
-      
+
       // Highlight the code
       if (window.hljs) {
         const code = modal.querySelector('code');
@@ -150,59 +150,63 @@
 <body>
   <!-- Sidebar Navigation -->
   <div class="sidebar" id="sidebar">
-    <button class="sidebar-toggle" id="sidebarToggle" title="Collapse/Expand Sidebar">
-      <i class="fas fa-angle-left" id="sidebarToggleIcon"></i>
-    </button>
-    <div class="logo">
-      <h1><i class="fas fa-code"></i> WebCTRL&nbsp;API Documentation</h1>
-    </div>
-    <div class="nav-section">
-      <h3><i class="fas fa-info-circle"></i> <span class="nav-label">Information</span></h3>
-      <ul>
-        <li class="nav-item" data-target="summary">
-          <i class="fas fa-list-alt"></i> <span class="nav-label">Summary</span>
+    <div class="sidebar-scroll">
+      <div class="logo">
+        <h1><i class="fas fa-code"></i> WebCTRL&nbsp;API Documentation</h1>
+      </div>
+      <div class="nav-section">
+        <h3><i class="fas fa-info-circle"></i> <span class="nav-label">Information</span></h3>
+        <ul>
+          <li class="nav-item" data-target="summary">
+            <i class="fas fa-list-alt"></i> <span class="nav-label">Summary</span>
+          </li>
+          <li class="nav-item" data-target="authentication">
+            <i class="fas fa-key"></i> <span class="nav-label">Authentication</span>
+          </li>
+        </ul>
+        <li class="nav-item" data-target="js-sdk">
+          <i class="fab fa-js-square"></i> <span class="nav-label">JavaScript&nbsp;SDK</span>
         </li>
-        <li class="nav-item" data-target="authentication">
-          <i class="fas fa-key"></i> <span class="nav-label">Authentication</span>
+        <li class="nav-item" data-target="ps-sdk">
+          <i class="fa-solid fa-terminal"></i> <span class="nav-label">PowerShell&nbsp;SDK</span>
         </li>
-      </ul>
-      <li class="nav-item" data-target="js-sdk">
-        <i class="fab fa-js-square"></i> <span class="nav-label">JavaScript&nbsp;SDK</span>
-      </li>
-      <li class="nav-item" data-target="ps-sdk">
-        <i class="fa-solid fa-terminal"></i> <span class="nav-label">PowerShell&nbsp;SDK</span>
-      </li>
-    </div>
-    <div class="nav-section">
-      <h3><i class="fas fa-book"></i> <span class="nav-label">Endpoints</span></h3>
-      <ul>
-        <li class="nav-item" data-target="get-schema">
-          <i class="fas fa-file-alt"></i> <span class="nav-label">GetSchema</span>
+      </div>
+      <div class="nav-section">
+        <h3><i class="fas fa-book"></i> <span class="nav-label">Endpoints</span></h3>
+        <ul>
+          <li class="nav-item" data-target="get-schema">
+            <i class="fas fa-file-alt"></i> <span class="nav-label">GetSchema</span>
+          </li>
+          <li class="nav-item" data-target="resolve-gql">
+            <i class="fas fa-search"></i> <span class="nav-label">ResolveGQL</span>
+          </li>
+          <li class="nav-item" data-target="search-gql">
+            <i class="fas fa-search-plus"></i> <span class="nav-label">SearchGQL</span>
+          </li>
+          <li class="nav-item" data-target="exec-gql">
+            <i class="fas fa-bolt"></i> <span class="nav-label">ExecGQL</span>
+          </li>
+          <li class="nav-item" data-target="exec-command">
+            <i class="fas fa-terminal"></i> <span class="nav-label">ExecCommand</span>
+          </li>
+          <li class="nav-item" data-target="create-operator">
+            <i class="fas fa-user-plus"></i> <span class="nav-label">CreateOperator</span>
+          </li>
+          <li class="nav-item" data-target="delete-operator">
+            <i class="fas fa-user-slash"></i> <span class="nav-label">DeleteOperator</span>
+          </li>
+          <li class="nav-item" data-target="get-trend-data">
+            <i class="fas fa-chart-line"></i> <span class="nav-label">GetTrendData</span>
+          </li>
+          <li class="nav-item" data-target="update-schedule-group">
+            <i class="fas fa-users"></i> <span class="nav-label">UpdateScheduleGroup</span>
+          </li>
+        </ul>
         </li>
-        <li class="nav-item" data-target="resolve-gql">
-          <i class="fas fa-search"></i> <span class="nav-label">ResolveGQL</span>
-        </li>
-        <li class="nav-item" data-target="search-gql">
-          <i class="fas fa-search-plus"></i> <span class="nav-label">SearchGQL</span>
-        </li>
-        <li class="nav-item" data-target="exec-gql">
-          <i class="fas fa-bolt"></i> <span class="nav-label">ExecGQL</span>
-        </li>
-        <li class="nav-item" data-target="exec-command">
-          <i class="fas fa-terminal"></i> <span class="nav-label">ExecCommand</span>
-        </li>
-        <li class="nav-item" data-target="create-operator">
-          <i class="fas fa-user-plus"></i> <span class="nav-label">CreateOperator</span>
-        </li>
-        <li class="nav-item" data-target="delete-operator">
-          <i class="fas fa-user-slash"></i> <span class="nav-label">DeleteOperator</span>
-        </li>
-        <li class="nav-item" data-target="get-trend-data">
-          <i class="fas fa-chart-line"></i> <span class="nav-label">GetTrendData</span>
-        </li>
-      </ul>
-      <li class="nav-item" data-target="get-schema">
-      </li>
+      </div>
+      <button class="sidebar-toggle" id="sidebarToggle" title="Collapse/Expand Sidebar">
+        <i class="fas fa-angle-left" id="sidebarToggleIcon"></i>
+      </button>
     </div>
   </div>
 
@@ -275,7 +279,14 @@
             <li style="margin-bottom:10px;">
               <b><a href="#get-trend-data" style="color:var(--primary);text-decoration:underline;"><i
                     class="fas fa-chart-line" style="margin-right:6px;"></i>GetTrendData</a></b><br>
-              <span style="color:var(--text-secondary);font-size:14px;">Retrieve trend data for one or many sources over a specified time range.</span>
+              <span style="color:var(--text-secondary);font-size:14px;">Retrieve trend data for one or many sources over
+                a specified time range.</span>
+            </li>
+            <li style="margin-bottom:10px;">
+              <b><a href="#update-schedule-group" style="color:var(--primary);text-decoration:underline;"><i
+                    class="fas fa-users" style="margin-right:6px;"></i>UpdateScheduleGroup</a></b><br>
+              <span style="color:var(--text-secondary);font-size:14px;">Update or read members of a schedule
+                group.</span>
             </li>
             <!-- Add future endpoints here -->
           </ul>
@@ -288,7 +299,10 @@
         </div>
         <div style="color:var(--text-secondary);margin-bottom:8px;">
           To begin using the API, review the authentication requirements, then explore the available endpoints. SDKs are
-          provided for rapid integration, or you can use your own HTTP client. You may also wish to review the <a href="./gql.html" target="_blank" style="color:var(--primary);text-decoration:underline;">GQL Path Quick Reference</a> or the <a href="./openapi.yaml" target="_blank" style="color:var(--primary);text-decoration:underline;">OpenAPI 3.0.4 Specification</a>.
+          provided for rapid integration, or you can use your own HTTP client. You may also wish to review the <a
+            href="./gql.html" target="_blank" style="color:var(--primary);text-decoration:underline;">GQL Path Quick
+            Reference</a> or the <a href="./openapi.yaml" target="_blank"
+            style="color:var(--primary);text-decoration:underline;">OpenAPI 3.0.4 Specification</a>.
         </div>
       </div>
     </div>
@@ -305,38 +319,50 @@
           <span style="font-size:20px;font-weight:600;">Authentication Methods</span>
         </div>
         <div style="margin-bottom:10px;">
-          <span style="color:var(--text-secondary);">This API supports two authentication methods. You need a <b>public</b> and <b>private</b> API key for both methods. The public key
+          <span style="color:var(--text-secondary);">This API supports two authentication methods. You need a
+            <b>public</b> and <b>private</b> API key for both methods. The public key
             can be shared; the private key must be kept secret.</span>
         </div>
-        <div style="margin-bottom:16px;padding:12px;background:var(--background);border-radius:6px;border-left:4px solid var(--success);">
-          <div style="font-weight:600;color:var(--success);margin-bottom:6px;"><i class="fas fa-shield-alt"></i> ApiKey Authentication (HTTPS Only)</div>
-          <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">The recommended method for HTTPS connections. Simple and secure.</div>
+        <div
+          style="margin-bottom:16px;padding:12px;background:var(--background);border-radius:6px;border-left:4px solid var(--success);">
+          <div style="font-weight:600;color:var(--success);margin-bottom:6px;"><i class="fas fa-shield-alt"></i> ApiKey
+            Authentication (HTTPS Only)</div>
+          <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">The recommended method for HTTPS
+            connections. Simple and secure.</div>
           <div style="margin-bottom:8px;">
             <i class="fas fa-arrow-right" style="color:var(--success);"></i>
-            <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> with your request data as JSON in the body.</span>
+            <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> with your
+              request data as JSON in the body.</span>
           </div>
           <div style="margin-bottom:8px;">
             <i class="fas fa-lock" style="color:var(--success);"></i>
-            <span style="font-weight:500;">The <code>Authorization</code> header contains: <code>ApiKey {publicKey}:{privateKey}</code></span>
+            <span style="font-weight:500;">The <code>Authorization</code> header contains:
+              <code>ApiKey {publicKey}:{privateKey}</code></span>
           </div>
           <div>
             <i class="fas fa-exclamation-triangle" style="color:var(--warning);"></i>
-            <span style="font-weight:500;color:var(--warning);">Only available over HTTPS. The server will reject ApiKey authentication over insecure HTTP.</span>
+            <span style="font-weight:500;color:var(--warning);">Only available over HTTPS. The server will reject ApiKey
+              authentication over insecure HTTP.</span>
           </div>
           <pre style="margin:12px 0 0 0;"><code class="language-http">Authorization: ApiKey {publicKey}:{privateKey}
 Content-Type: application/json
 Accept: application/json</code></pre>
         </div>
-        <div style="margin-bottom:10px;padding:12px;background:var(--background);border-radius:6px;border-left:4px solid var(--info);">
-          <div style="font-weight:600;color:var(--info);margin-bottom:6px;"><i class="fas fa-key"></i> JWT Authentication (HTTP & HTTPS)</div>
-          <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">Supported over both HTTP and HTTPS. Uses HMAC-SHA256 signatures.</div>
+        <div
+          style="margin-bottom:10px;padding:12px;background:var(--background);border-radius:6px;border-left:4px solid var(--info);">
+          <div style="font-weight:600;color:var(--info);margin-bottom:6px;"><i class="fas fa-key"></i> JWT
+            Authentication (HTTP & HTTPS)</div>
+          <div style="margin-bottom:8px;color:var(--text-secondary);font-size:15px;">Supported over both HTTP and HTTPS.
+            Uses HMAC-SHA256 signatures.</div>
           <div style="margin-bottom:8px;">
             <i class="fas fa-arrow-right" style="color:var(--info);"></i>
-            <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> with a <b>JWT payload</b> in the request body.</span>
+            <span style="font-weight:500;">All endpoints use <span style="color:var(--primary);">POST</span> with a
+              <b>JWT payload</b> in the request body.</span>
           </div>
           <div style="margin-bottom:8px;">
             <i class="fas fa-lock" style="color:var(--info);"></i>
-            <span style="font-weight:500;">The <code>Authorization</code> header contains a Bearer token: an <b>HMAC-SHA-256 signature</b> of the JWT payload.</span>
+            <span style="font-weight:500;">The <code>Authorization</code> header contains a Bearer token: an
+              <b>HMAC-SHA-256 signature</b> of the JWT payload.</span>
           </div>
           <div>
             <i class="fas fa-info-circle" style="color:var(--info);"></i>
@@ -348,7 +374,8 @@ Accept: application/json</code></pre>
         </div>
         <div style="margin-bottom:0px;">
           <i class="fas fa-user-check" style="color:var(--primary);"></i>
-          <span>If your session is already authenticated to WebCTRL, neither authentication method is required. This means API keys
+          <span>If your session is already authenticated to WebCTRL, neither authentication method is required. This
+            means API keys
             are unnecessary when invoked by JavaScript from an add-on's main page that is accessed by a logged-in user
             (which is precisely how these documentation pages allow users to test endpoints).</span>
         </div>
@@ -410,9 +437,11 @@ Accept: application/json</code></pre>
           <li>A rate limit of <b>2000 requests per minute</b> per API key is enforced.</li>
           <li>There is a <b>16 KB limit</b> on the total size of the request body.</li>
         </ul>
-        <div style="margin-top:12px;padding:10px;background:var(--background);border-radius:6px;color:var(--text-secondary);font-size:15px;">
+        <div
+          style="margin-top:12px;padding:10px;background:var(--background);border-radius:6px;color:var(--text-secondary);font-size:15px;">
           <i class="fas fa-info-circle" style="color:var(--error);"></i>
-          <b>ApiKey Authentication:</b> ApiKey authentication does not use nonces or time-based expiration, so there are no JWT-specific security restrictions. However, it requires HTTPS and enforces the same body size limits.
+          <b>ApiKey Authentication:</b> ApiKey authentication does not use nonces or time-based expiration, so there are
+          no JWT-specific security restrictions. However, it requires HTTPS and enforces the same body size limits.
         </div>
       </div>
 
@@ -489,9 +518,11 @@ Accept: application/json</code></pre>
         explicitly specify a server URL or API keys:
         <pre
           style="margin:8px 0 0 0;background:var(--background);padding:8px 12px;border-radius:6px;"><code class="language-javascript">new WebCTRLAPIClient('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY');</code></pre>
-        <div style="margin-top:8px;padding:8px;background:var(--background);border-radius:6px;color:var(--text-secondary);font-size:14px;">
+        <div
+          style="margin-top:8px;padding:8px;background:var(--background);border-radius:6px;color:var(--text-secondary);font-size:14px;">
           <i class="fas fa-shield-alt" style="color:var(--success);"></i>
-          When both API keys are provided and the connection is HTTPS, the client automatically uses <b>ApiKey authentication</b> for simplicity. For HTTP connections, it falls back to JWT authentication.
+          When both API keys are provided and the connection is HTTPS, the client automatically uses <b>ApiKey
+            authentication</b> for simplicity. For HTTP connections, it falls back to JWT authentication.
         </div>
       </div>
       <div style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">
@@ -549,7 +580,8 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
       </div>
       <div class="api-desc api-note" style="margin-bottom:12px;">
         <i class="fas fa-shield-alt" style="color:var(--success);font-size:15px;"></i>
-        &nbsp;When connecting over HTTPS, this module automatically uses <b>ApiKey authentication</b> for simplicity. For HTTP connections, it falls back to JWT authentication.
+        &nbsp;When connecting over HTTPS, this module automatically uses <b>ApiKey authentication</b> for simplicity.
+        For HTTP connections, it falls back to JWT authentication.
       </div>
       <div class="api-desc api-note" style="margin-bottom:12px;">
         <i class="fas fa-lightbulb" style="color:var(--warning);font-size:15px;"></i>
@@ -662,7 +694,9 @@ $client.sendRequest('ResolveGQL', @{ path='#main_floor' })</code></pre>
       <div id="ResolveGQL-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="ResolveGQL-view-request-btn" onclick="viewRequestData('ResolveGQL')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="ResolveGQL-view-request-btn" onclick="viewRequestData('ResolveGQL')" class="view-request-button"
+            title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View
+            Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="ResolveGQL-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -795,18 +829,33 @@ curl -X POST https://localhost/RestAPI/api/ResolveGQL \
         <span class="method-badge">POST /RestAPI/api/SearchGQL</span>
       </div>
       <div class="api-desc">
-        This endpoint traverses the node tree starting from one or more root nodes, applying filters at each step to find matching nodes.
+        This endpoint traverses the node tree starting from one or more root nodes, applying filters at each step to
+        find matching nodes.
         Each step processes input nodes from the previous step (or from <code>roots</code> if it's the first step):
         <ul style="margin:8px 0 8px 20px;color:var(--text-primary);">
-          <li><b>includeRoots:</b> If true, the input nodes are tested against <code>intermediateFilter</code> (and potentially <code>leafFilter</code>). If false, only the children of input nodes are tested.</li>
-          <li><b>intermediateFilter:</b> Recursively applied during tree traversal. If a node matches, its children are explored in the next iteration. The step continues through multiple recursive iterations until only leaf nodes remain.</li>
-          <li><b>leafFilter:</b> Applied to leaf nodes (nodes with no children or nodes that didn't match <code>intermediateFilter</code>). Matching nodes are included in the final results.</li>
-          <li><b>leafToggle:</b> If false (default), the standard behavior is used: nodes <em>not</em> matching <code>intermediateFilter</code> are checked against <code>leafFilter</code>. If true, nodes <em>matching</em> <code>intermediateFilter</code> are also checked against <code>leafFilter</code>. In this mode <code>intermediateFilter</code> includes or excludes entire branches, while <code>leafFilter</code> selects nodes within those branches.</li>
+          <li><b>includeRoots:</b> If true, the input nodes are tested against <code>intermediateFilter</code> (and
+            potentially <code>leafFilter</code>). If false, only the children of input nodes are tested.</li>
+          <li><b>intermediateFilter:</b> Recursively applied during tree traversal. If a node matches, its children are
+            explored in the next iteration. The step continues through multiple recursive iterations until only leaf
+            nodes remain.</li>
+          <li><b>leafFilter:</b> Applied to leaf nodes (nodes with no children or nodes that didn't match
+            <code>intermediateFilter</code>). Matching nodes are included in the final results.
+          </li>
+          <li><b>leafToggle:</b> If false (default), the standard behavior is used: nodes <em>not</em> matching
+            <code>intermediateFilter</code> are checked against <code>leafFilter</code>. If true, nodes
+            <em>matching</em> <code>intermediateFilter</code> are also checked against <code>leafFilter</code>. In this
+            mode <code>intermediateFilter</code> includes or excludes entire branches, while <code>leafFilter</code>
+            selects nodes within those branches.
+          </li>
         </ul>
-        <b>How a step works:</b> Starting with input nodes, if <code>includeRoots</code> is true, test them against <code>intermediateFilter</code>. 
-        For nodes matching <code>intermediateFilter</code>, recursively explore their children. This recursion continues until no more nodes match <code>intermediateFilter</code>.
+        <b>How a step works:</b> Starting with input nodes, if <code>includeRoots</code> is true, test them against
+        <code>intermediateFilter</code>.
+        For nodes matching <code>intermediateFilter</code>, recursively explore their children. This recursion continues
+        until no more nodes match <code>intermediateFilter</code>.
         Finally, apply <code>leafFilter</code> to all remaining leaf nodes to determine which are returned as results.
-        When <code>leafToggle</code> is true, nodes that match <code>intermediateFilter</code> are tested against <code>leafFilter</code>, instead so <code>leafFilter</code> selects results from within the searched branches rather than only at their boundaries.
+        When <code>leafToggle</code> is true, nodes that match <code>intermediateFilter</code> are tested against
+        <code>leafFilter</code>, instead so <code>leafFilter</code> selects results from within the searched branches
+        rather than only at their boundaries.
         Use multiple steps to build complex hierarchical searches.
       </div>
       <div class="api-live-demo">
@@ -862,7 +911,9 @@ curl -X POST https://localhost/RestAPI/api/ResolveGQL \
       <div id="SearchGQL-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="SearchGQL-view-request-btn" onclick="viewRequestData('SearchGQL')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="SearchGQL-view-request-btn" onclick="viewRequestData('SearchGQL')" class="view-request-button"
+            title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View
+            Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="SearchGQL-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -1229,8 +1280,11 @@ $client.sendRequest('SearchGQL', @{
       </div>
       <div class="api-desc">
         Retrieves trend data for one or many sources. Each source is specified by a GQL path or DBID.
-        Time boundaries are specified in milliseconds since the epoch. Negative values for <code>startTime</code> and non-positive values for <code>endTime</code> are treated as offsets from the current time.
-        For many sources with large time intervals, consider splitting requests into smaller chunks to avoid timeouts. The response format of this endpoint mimics the structure used by WebCTRL's internal REST API for displaying trend data.
+        Time boundaries are specified in milliseconds since the epoch. Negative values for <code>startTime</code> and
+        non-positive values for <code>endTime</code> are treated as offsets from the current time.
+        For many sources with large time intervals, consider splitting requests into smaller chunks to avoid timeouts.
+        The response format of this endpoint mimics the structure used by WebCTRL's internal REST API for displaying
+        trend data.
       </div>
       <div class="api-live-demo">
         <div class="api-demo-header">
@@ -1242,37 +1296,49 @@ $client.sendRequest('SearchGQL', @{
             <div class="api-param-div">
               <label for="GetTrendData-param-sources" class="api-param-name">sources <span
                   class="api-param-required">(required)</span></label>
-              <span class="api-param-desc">Comma-delimited list of GQL paths or DBIDs to resolve as trend sources. When constructing this parameter manually, you should use a JSON array instead of a comma-delimited string.</span>
-              <input type="text" id="GetTrendData-param-sources" name="sources" placeholder="e.g. #vav-1/dat,#vav-2/dat,1001" required>
+              <span class="api-param-desc">Comma-delimited list of GQL paths or DBIDs to resolve as trend sources. When
+                constructing this parameter manually, you should use a JSON array instead of a comma-delimited
+                string.</span>
+              <input type="text" id="GetTrendData-param-sources" name="sources"
+                placeholder="e.g. #vav-1/dat,#vav-2/dat,1001" required>
             </div>
             <div class="api-param-div">
               <label for="GetTrendData-param-startTime" class="api-param-name">startTime <span
                   class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">Starting time boundary for trend data retrieval in milliseconds since the epoch. Numbers &lt; 0 are treated as offsets from the current time. Default: <code>0</code>.</span>
-              <input type="text" id="GetTrendData-param-startTime" name="startTime" inputmode="numeric" placeholder="e.g. -86400000 (24 hours ago)" oninput="stripNonDigitsAllowNegative(this)">
+              <span class="api-param-desc">Starting time boundary for trend data retrieval in milliseconds since the
+                epoch. Numbers &lt; 0 are treated as offsets from the current time. Default: <code>0</code>.</span>
+              <input type="text" id="GetTrendData-param-startTime" name="startTime" inputmode="numeric"
+                placeholder="e.g. -86400000 (24 hours ago)" oninput="stripNonDigitsAllowNegative(this)">
             </div>
             <div class="api-param-div">
               <label for="GetTrendData-param-endTime" class="api-param-name">endTime <span
                   class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">Ending time boundary for trend data retrieval in milliseconds since the epoch. Numbers &lt;= 0 are treated as offsets from the current time. Default: <code>0</code> (current time).</span>
-              <input type="text" id="GetTrendData-param-endTime" name="endTime" inputmode="numeric" placeholder="e.g. 0 (now)" oninput="stripNonDigitsAllowNegative(this)">
+              <span class="api-param-desc">Ending time boundary for trend data retrieval in milliseconds since the
+                epoch. Numbers &lt;= 0 are treated as offsets from the current time. Default: <code>0</code> (current
+                time).</span>
+              <input type="text" id="GetTrendData-param-endTime" name="endTime" inputmode="numeric"
+                placeholder="e.g. 0 (now)" oninput="stripNonDigitsAllowNegative(this)">
             </div>
             <div class="api-param-div">
               <label for="GetTrendData-param-resolution" class="api-param-name">resolution <span
                   class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">Approximately specifies the resolution for trend data retrieval in milliseconds. Default: <code>60000</code> (1 minute).</span>
-              <input type="text" id="GetTrendData-param-resolution" name="resolution" inputmode="numeric" placeholder="e.g. 60000" oninput="stripNonDigits(this)">
+              <span class="api-param-desc">Approximately specifies the resolution for trend data retrieval in
+                milliseconds. Default: <code>60000</code> (1 minute).</span>
+              <input type="text" id="GetTrendData-param-resolution" name="resolution" inputmode="numeric"
+                placeholder="e.g. 60000" oninput="stripNonDigits(this)">
             </div>
             <div class="api-param-div">
               <label for="GetTrendData-param-fieldAccess" class="api-param-name">fieldAccess <span
                   class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">If true, information may be retrieved from devices in the field. It is suggested to leave this false unless you need it. Default: <code>false</code>.</span>
+              <span class="api-param-desc">If true, information may be retrieved from devices in the field. It is
+                suggested to leave this false unless you need it. Default: <code>false</code>.</span>
               <input type="checkbox" id="GetTrendData-param-fieldAccess" name="fieldAccess">
             </div>
             <div class="api-param-div">
               <label for="GetTrendData-param-contextDBID" class="api-param-name">contextDBID <span
                   class="api-param-optional">(optional)</span></label>
-              <span class="api-param-desc">If provided, GQL paths in the <code>sources</code> property will be resolved relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
+              <span class="api-param-desc">If provided, GQL paths in the <code>sources</code> property will be resolved
+                relative to this node. If omitted, paths will be resolved relative to the root of the geo tree.</span>
               <input type="text" id="GetTrendData-param-contextDBID" name="contextDBID" inputmode="numeric"
                 placeholder="e.g. 1028" oninput="stripNonDigitsAllowNegative(this)">
             </div>
@@ -1289,7 +1355,10 @@ $client.sendRequest('SearchGQL', @{
       <div id="GetTrendData-demo-result" class="api-demo-result">
         <div class="api-card-header" style="display:flex;justify-content:space-between;align-items:center;">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="GetTrendData-view-request-btn" onclick="viewRequestData('GetTrendData')" style="display:none;background:var(--info);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="GetTrendData-view-request-btn" onclick="viewRequestData('GetTrendData')"
+            style="display:none;background:var(--info);color:white;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:13px;"
+            title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View
+            Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="GetTrendData-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -1369,6 +1438,186 @@ curl -X POST https://localhost/RestAPI/api/GetTrendData \
       </script>
     </div>
 
+    <!-- UpdateScheduleGroup Section -->
+    <div id="update-schedule-group" class="api-section">
+      <div class="section-header">
+        <h2><i class="fas fa-users"></i> UpdateScheduleGroup</h2>
+        <span class="method-badge">POST /RestAPI/api/UpdateScheduleGroup</span>
+      </div>
+      <div class="api-desc">
+        This endpoint updates or reads members of a schedule group. Set the <code>action</code> to
+        <code>READ</code> or <code>READ_ALL</code> to query members without making changes.
+      </div>
+      <div class="api-live-demo">
+        <div class="api-demo-header">
+          <i class="fas fa-sliders-h" style="color:var(--primary);"></i>
+          <span class="api-card-header">Parameters</span>
+        </div>
+        <form id="UpdateScheduleGroup-demo-form" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div style="display:flex;flex-direction:column;gap:18px;align-items:stretch;">
+            <div class="api-param-div">
+              <label for="UpdateScheduleGroup-param-group" class="api-param-name">group <span
+                  class="api-param-required">(required)</span></label>
+              <span class="api-param-desc">The reference name of the schedule group to update (case-insensitive).</span>
+              <input type="text" id="UpdateScheduleGroup-param-group" name="group" placeholder="e.g. occupied_weekday"
+                required>
+            </div>
+            <div class="api-param-div">
+              <label for="UpdateScheduleGroup-param-members" class="api-param-name">members <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">Comma-delimited list of GQL paths or DBIDs that specify schedule-group
+                members. Accepted node types are <code>BEQU</code>, <code>AREA</code>, <code>GROUP</code>, and
+                <code>HSGROUP</code>. Ignored when the <code>action</code> is <code>READ</code> or
+                <code>READ_ALL</code>. When constructing this parameter manually, use a JSON array instead of a
+                comma-delimited string.</span>
+              <input type="text" id="UpdateScheduleGroup-param-members" name="members"
+                placeholder="e.g. #main_floor,1028">
+            </div>
+            <div class="api-param-div">
+              <label for="UpdateScheduleGroup-param-action" class="api-param-name">action <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">The action to perform. <code>ADD</code> will add specified members to the
+                existing group if they are not already present. <code>REMOVE</code> will remove specified members from
+                the group if they are present. <code>REPLACE</code> will replace all existing members. <code>READ</code>
+                will read the current members of the group without making any changes. <code>READ_ALL</code> is similar
+                to <code>READ</code> but recurses into nested schedule groups. Default: <code>READ</code>.</span>
+              <input type="text" id="UpdateScheduleGroup-param-action" name="action"
+                placeholder="READ | READ_ALL | ADD | REMOVE | REPLACE" oninput="this.value = this.value.toUpperCase()">
+            </div>
+            <div class="api-param-div">
+              <label for="UpdateScheduleGroup-param-download" class="api-param-name">download <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If <code>true</code>, the server will attempt to asynchronously download
+                modified schedules to all affected programs. If <code>false</code>, suspended download tasks will be
+                created instead (to be manually initiated at a later time). Default: <code>false</code>.</span>
+              <input type="checkbox" id="UpdateScheduleGroup-param-download" name="download">
+            </div>
+            <div class="api-param-div">
+              <label for="UpdateScheduleGroup-param-contextDBID" class="api-param-name">contextDBID <span
+                  class="api-param-optional">(optional)</span></label>
+              <span class="api-param-desc">If provided, this DBID will be used as the session's context for resolving
+                relative paths.</span>
+              <input type="text" id="UpdateScheduleGroup-param-contextDBID" name="contextDBID" inputmode="numeric"
+                placeholder="DBID (integer)" oninput="stripNonDigitsAllowNegative(this)">
+            </div>
+          </div>
+          <div class="api-btn-test-div">
+            <button type="submit" class="api-demo-btn">
+              <i class="fas fa-play" style="margin-right:7px;"></i> Test Endpoint
+            </button>
+            <span id="UpdateScheduleGroup-loading" style="display:none;"><i class="fas fa-spinner fa-spin"
+                style="color:var(--primary);"></i></span>
+          </div>
+        </form>
+      </div>
+      <div id="UpdateScheduleGroup-demo-result" class="api-demo-result">
+        <div class="api-card-header response-card-header">
+          <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
+          <button id="UpdateScheduleGroup-view-request-btn" onclick="viewRequestData('UpdateScheduleGroup')"
+            class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane"
+              style="margin-right:5px;"></i>View Request</button>
+        </div>
+        <pre
+          style="margin:10px 0 2px 0;"><code id="UpdateScheduleGroup-demo-result-code" class="language-json api-code-response"></code></pre>
+      </div>
+      <div class="api-samples-card">
+        <div class="api-card-header"><i class="fas fa-code" style="color:var(--success);"></i> SDK Samples</div>
+        <div class="api-tabs-container">
+          <div class="api-tabs">
+            <button class="api-tab js-tab active" data-tab="js"><i
+                class="fab fa-js-square"></i>&nbsp;JavaScript</button>
+            <button class="api-tab ps-tab" data-tab="ps"><i class="fa-solid fa-terminal"></i>&nbsp;PowerShell</button>
+            <button class="api-tab curl-tab" data-tab="curl"><i class="fas fa-dollar"></i>&nbsp;curl</button>
+          </div>
+          <div class="api-tab-content js-tab active">
+            <pre><code class="language-javascript">const client = new WebCTRLAPIClient();
+// Read direct members
+console.log(await client.sendRequest('UpdateScheduleGroup', {
+  group: 'occupied_weekday',
+  action: 'READ'
+}));
+
+// Replace members and begin schedule downloads
+console.log(await client.sendRequest('UpdateScheduleGroup', {
+  group: 'occupied_weekday',
+  action: 'REPLACE',
+  members: ['#main_floor', '#vav-2', 1028],
+  download: true
+}));</code></pre>
+          </div>
+          <div class="api-tab-content ps-tab">
+            <pre><code class="language-powershell">using module 'C:\path\to\WebCTRLAPIClient'
+$client = [WebCTRLAPIClient]::new('https://localhost/', 'PUBLIC_API_KEY', 'PRIVATE_API_KEY')
+# Read direct members
+$client.sendRequest('UpdateScheduleGroup', @{
+  group = 'occupied_weekday'
+  action = 'READ'
+})
+
+# Add members and create suspended download tasks
+$client.sendRequest('UpdateScheduleGroup', @{
+  group = 'occupied_weekday'
+  action = 'ADD'
+  members = @('#main_floor', 2048)
+  download = $false
+})</code></pre>
+          </div>
+          <div class="api-tab-content curl-tab">
+            <pre><code class="language-bash">curl -X POST https://localhost/RestAPI/api/UpdateScheduleGroup \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "group": "occupied_weekday",
+    "action": "READ_ALL"
+  }'
+
+curl -X POST https://localhost/RestAPI/api/UpdateScheduleGroup \
+  -H "Authorization: ApiKey publicKey:privateKey" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json" \
+  -d '{
+    "group": "occupied_weekday",
+    "action": "REMOVE",
+    "members": ["#main_floor", 1028],
+    "download": false
+  }'</code></pre>
+          </div>
+        </div>
+      </div>
+      <script>
+        registerEndpointDemo('UpdateScheduleGroup', () => {
+          const groupVal = document.getElementById('UpdateScheduleGroup-param-group').value.trim();
+          const membersVal = document.getElementById('UpdateScheduleGroup-param-members').value.trim();
+          const actionInput = document.getElementById('UpdateScheduleGroup-param-action').value.trim();
+          const download = document.getElementById('UpdateScheduleGroup-param-download').checked;
+          const contextDBIDVal = document.getElementById('UpdateScheduleGroup-param-contextDBID').value.trim();
+
+          const action = (actionInput || 'READ').toUpperCase();
+          const validActions = new Set(['ADD', 'REMOVE', 'REPLACE', 'READ', 'READ_ALL']);
+          if (!validActions.has(action)) {
+            alert('action must be one of: ADD, REMOVE, REPLACE, READ, READ_ALL');
+            return null;
+          }
+
+          let members = undefined;
+          if (membersVal) {
+            members = membersVal
+              .split(',')
+              .map(s => s.trim())
+              .filter(Boolean)
+              .map(s => (/^-?\d+$/.test(s) ? BigInt(s) : s));
+          }
+
+          let req = { group: groupVal, action };
+          if (members && members.length > 0) req.members = members;
+          if (download) req.download = true;
+          if (contextDBIDVal && /^-?\d+$/.test(contextDBIDVal)) req.contextDBID = BigInt(contextDBIDVal);
+          return req;
+        });
+      </script>
+    </div>
+
     <!-- ExecCommand Section -->
     <div id="exec-command" class="api-section">
       <div class="section-header">
@@ -1421,7 +1670,9 @@ curl -X POST https://localhost/RestAPI/api/GetTrendData \
       <div id="ExecCommand-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="ExecCommand-view-request-btn" onclick="viewRequestData('ExecCommand')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="ExecCommand-view-request-btn" onclick="viewRequestData('ExecCommand')" class="view-request-button"
+            title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View
+            Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="ExecCommand-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -1517,7 +1768,9 @@ $client.sendRequest('ExecCommand', @{ command='cd #device_01_g5re | modstat' })<
       <div id="GetSchema-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="GetSchema-view-request-btn" onclick="viewRequestData('GetSchema')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="GetSchema-view-request-btn" onclick="viewRequestData('GetSchema')" class="view-request-button"
+            title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View
+            Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="GetSchema-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -1636,7 +1889,9 @@ $client.sendRequest('GetSchema', @{ endpoint='ResolveGQL' })</code></pre>
       <div id="ExecGQL-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="ExecGQL-view-request-btn" onclick="viewRequestData('ExecGQL')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="ExecGQL-view-request-btn" onclick="viewRequestData('ExecGQL')" class="view-request-button"
+            title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View
+            Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="ExecGQL-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -1837,7 +2092,9 @@ curl -X POST https://localhost/RestAPI/api/ExecGQL \
       <div id="CreateOperator-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="CreateOperator-view-request-btn" onclick="viewRequestData('CreateOperator')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="CreateOperator-view-request-btn" onclick="viewRequestData('CreateOperator')"
+            class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane"
+              style="margin-right:5px;"></i>View Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="CreateOperator-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -1961,7 +2218,9 @@ curl -X POST https://localhost/RestAPI/api/CreateOperator \
       <div id="DeleteOperator-demo-result" class="api-demo-result">
         <div class="api-card-header response-card-header">
           <span><i class="fas fa-reply" style="color:var(--warning);"></i> Response</span>
-          <button id="DeleteOperator-view-request-btn" onclick="viewRequestData('DeleteOperator')" class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane" style="margin-right:5px;"></i>View Request</button>
+          <button id="DeleteOperator-view-request-btn" onclick="viewRequestData('DeleteOperator')"
+            class="view-request-button" title="View the raw request data sent"><i class="fas fa-paper-plane"
+              style="margin-right:5px;"></i>View Request</button>
         </div>
         <pre
           style="margin:10px 0 2px 0;"><code id="DeleteOperator-demo-result-code" class="language-json api-code-response"></code></pre>
@@ -2025,7 +2284,8 @@ curl -X POST https://localhost/RestAPI/api/DeleteOperator \
         <h2><i class="fas fa-exclamation-circle"></i> HTTP Response Codes</h2>
       </div>
       <div style="color:var(--text-secondary);font-size:14px;margin-bottom:12px;">
-        <b>Note:</b> These are the generic response codes. Specific endpoints may use additional codes (e.g, 201 for successful operator creation).
+        <b>Note:</b> These are the generic response codes. Specific endpoints may use additional codes (e.g, 201 for
+        successful operator creation).
       </div>
       <div class="response-codes">
         <div class="code-card">
@@ -2241,7 +2501,7 @@ curl -X POST https://localhost/RestAPI/api/DeleteOperator \
       // Load existing filter into iframe if present
       const textarea = document.getElementById(`SearchGQL-step-${stepId}-${filterType}`);
       let existingFilter = textarea?.value.trim();
-      
+
       // If textarea is empty, get the display value (respects default false for intermediateFilter, true for leafFilter)
       if (!existingFilter) {
         const display = document.getElementById(`SearchGQL-step-${stepId}-${filterType}-display`);
@@ -2286,7 +2546,7 @@ curl -X POST https://localhost/RestAPI/api/DeleteOperator \
 
     function closeFilterBuilder() {
       const modal = document.getElementById('filter-builder-modal');
-      
+
       // Apply the pending filter update when closing
       if (pendingFilterUpdate !== null && currentFilterStepId !== null && currentFilterType !== null) {
         const textarea = document.getElementById(`SearchGQL-step-${currentFilterStepId}-${currentFilterType}`);
@@ -2295,7 +2555,7 @@ curl -X POST https://localhost/RestAPI/api/DeleteOperator \
           updateSearchGQLFilterDisplay(currentFilterStepId, currentFilterType);
         }
       }
-      
+
       modal.classList.remove('active');
       currentFilterStepId = null;
       currentFilterType = null;

@@ -188,19 +188,25 @@ body {
 .sidebar {
   width: 280px;
   background: linear-gradient(180deg, var(--sidebar-gradient-start), var(--background));
-  padding: 25px 0;
+  padding: 0;
   border-right: 1px solid var(--border);
   height: 100vh;
   position: fixed;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 3px 0 15px var(--sidebar-shadow);
   z-index: 100;
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow-x: hidden;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+.sidebar-scroll {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 .sidebar.collapsed {
@@ -216,7 +222,7 @@ body {
 }
 
 .sidebar.collapsed .logo {
-  padding: 0 10px 20px;
+  padding: 10px 10px 10px;
 }
 
 .sidebar.collapsed .nav-section h3,
@@ -235,9 +241,10 @@ body {
 }
 
 .sidebar-toggle {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
+  position: sticky;
+  bottom: 6px;
+  align-self: flex-end;
+  margin: auto 6px 6px 6px;
   width: 36px;
   height: 36px;
   background: var(--primary);
@@ -258,9 +265,8 @@ body {
 }
 
 .logo {
-  padding: 0 25px 20px;
+  padding: 10px 25px 15px;
   border-bottom: 1px solid var(--border);
-  margin-bottom: 20px;
 }
 
 .logo h1 {
@@ -280,7 +286,7 @@ body {
 }
 
 .nav-section {
-  margin-bottom: 25px;
+  margin-top: 20px;
 }
 
 .nav-section h3 {

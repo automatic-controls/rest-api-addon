@@ -67,7 +67,7 @@ public class ExecGQL extends ApiBase {
         DatabaseLink link = res.createLink(0);
       ){
         CoreNode ctx,n;
-        if (contextDBID!=0){
+        if (contextDBID!=0L){
           ctx = link.getNode(contextDBID);
         }else{
           ctx = link.getNode("/trees/geographic");

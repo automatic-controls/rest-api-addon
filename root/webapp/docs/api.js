@@ -93,7 +93,7 @@ class WebCTRLAPIClient {
           signal: fetchSignal
         });
         ret = JSON.parse(await response.text(), (_k,v,ctx) => {
-          if (typeof v==='number' && typeof ctx.source==='string' && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v)){
+          if (typeof v==='number' && ctx && typeof ctx.source==='string' && /^-?\d+$/.test(ctx.source) && !Number.isSafeInteger(v)){
             return BigInt(ctx.source);
           }else{
             return v;

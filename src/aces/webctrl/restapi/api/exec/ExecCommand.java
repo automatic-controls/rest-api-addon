@@ -23,7 +23,7 @@ public class ExecCommand extends ApiBase {
       final DatabaseLink link = res.createLink(0);
     ){
       CoreNode node;
-      if (contextDBID!=0){
+      if (contextDBID!=0L){
         node = link.getNode(contextDBID);
       }else{
         node = link.getNode("/trees/geographic");

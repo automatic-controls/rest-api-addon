@@ -9,4 +9,5 @@ public class Permissions {
   public final static int CreateOperator = ++next;
   public final static int DeleteOperator = ++next;
   public final static int GetTrendData = ++next;
+  public final static int UpdateScheduleGroup = ++next;
 }

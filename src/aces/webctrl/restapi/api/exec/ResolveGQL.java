@@ -251,7 +251,7 @@ public class ResolveGQL extends ApiBase {
           node = null;
         }
       }else{
-        if (relative && contextDBID!=0){
+        if (relative && contextDBID!=0L){
           node = link.getNode(contextDBID);
         }else{
           node = link.getNode("/trees/geographic");
