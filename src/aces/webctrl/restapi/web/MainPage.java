@@ -17,7 +17,7 @@ public class MainPage extends ServletBase {
     }
     return ret;
   }
-  @Override public void exec(final HttpServletRequest req, final HttpServletResponse res) throws Throwable {
+  @Override public void exec(final HttpServletRequest req, final HttpServletResponse res, final boolean post) throws Throwable {
     final String reqUsername = ((WebOperator)((CJPrincipal)req.getUserPrincipal()).getWebOperator()).getLoginName();
     if (reqUsername==null){
       res.sendError(500, "Unable to determine the current user.");
@@ -50,6 +50,10 @@ public class MainPage extends ServletBase {
         break;
       }
       case "insecure":{
+        if (!post){
+          res.setStatus(405);
+          return;
+        }
         if (effUsername!=null){
           res.setStatus(403);
           return;
@@ -64,6 +68,10 @@ public class MainPage extends ServletBase {
         break;
       }
       case "delete":{
+        if (!post){
+          res.setStatus(405);
+          return;
+        }
         final String key = req.getParameter("key");
         if (key==null || key.isBlank()){
           res.setStatus(400);
@@ -77,6 +85,10 @@ public class MainPage extends ServletBase {
         break;
       }
       case "new":{
+        if (!post){
+          res.setStatus(405);
+          return;
+        }
         final String name = req.getParameter("name");
         String operator = req.getParameter("operator");
         final String p = req.getParameter("perms");

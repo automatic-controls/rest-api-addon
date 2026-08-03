@@ -13,12 +13,12 @@ public abstract class ServletBase extends HttpServlet {
    * This is the primary method which subclasses will want to override.
    * When a GET or POST request is made, this method will be invoked.
    */
-  public abstract void exec(HttpServletRequest req, HttpServletResponse res) throws Throwable;
-  /**
-   * This method specifies that GET requests are handled identically to POST requests.
-   */
+  public abstract void exec(HttpServletRequest req, HttpServletResponse res, boolean post) throws Throwable;
   @Override public void doGet(final HttpServletRequest req, final HttpServletResponse res) throws ServletException, IOException {
-    doPost(req,res);
+    func(req,res,false);
+  }
+  @Override public void doPost(final HttpServletRequest req, final HttpServletResponse res) throws ServletException, IOException {
+    func(req,res,true);
   }
   /**
    * Used to check if the current user has the required role to access this servlet.
@@ -33,7 +33,7 @@ public abstract class ServletBase extends HttpServlet {
   /**
    * This is the primary method wrapping our overridden {@code exec} method.
    */
-  @Override public void doPost(final HttpServletRequest req, final HttpServletResponse res) throws ServletException, IOException {
+  private void func(final HttpServletRequest req, final HttpServletResponse res, final boolean post) throws ServletException, IOException {
     try{
       req.setCharacterEncoding("UTF-8");
       res.setCharacterEncoding("UTF-8");
@@ -41,7 +41,7 @@ public abstract class ServletBase extends HttpServlet {
       if (Initializer.stop){
         res.sendError(404, "Add-on is shutting down.");
       }else if (checkRole(req,res)){
-        exec(req,res);
+        exec(req,res,post);
       }
     }catch(NumberFormatException e){
       Initializer.log(e);
